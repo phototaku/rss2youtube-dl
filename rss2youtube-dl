@@ -1,0 +1,91 @@
+#!/usr/bin/env python3
+"""
+rss2youtube-dl
+Desc: A small app that downloads and parses youtube channels for download by youtube-dl
+v.0.1
+2020 by antiSOFT
+
+Usage:
+  rss2youtube-dl [-c CONFIGFILE]
+  rss2youtube-dl --help
+  rss2youtube-dl --version
+
+Options:
+  -c CONFIGFILE                    Use custom configuration file             
+  -h --help                        Show this screen
+  --version                        Show version info
+
+"""
+from docopt import docopt
+from feed import Feed
+from seendb import SeenDB
+from channel import Channel
+import youtube_dl
+import os
+import time
+import sys
+import re
+
+def is_video(item):
+    if re.search(r'youtu.be', item) or re.search(r'youtube.com', item):
+        return True
+    if re.search(r'twitter.com', item):
+        return True
+    if re.search(r'facebook.com', item):
+        return True
+    return False
+
+def download(title,path,rss): 
+    ydl_opts = {
+        "outtmpl": f"{path}/{title}.%(ext)s",
+        "format": "best",
+        "quiet": True,
+        "retries": 3,
+        "nooverwrites": False,
+        "continuedl": True,
+    } 
+    try:
+        with youtube_dl.YoutubeDL(ydl_opts) as ydl: 
+            ydl.download([rss]) 
+        return True
+    except:
+        return False
+
+def printResult(unseen):
+    for item in unseen:
+        print(item)
+    return
+
+def main(args):
+    if args['-c']:
+        if os.path.isfile(args['-c']):
+            channels = Channel(args['-c']).list()
+        else:
+            print("File",args['-c'],"does not exist")
+            exit(1)
+    else:    
+        channels = Channel().list()
+    for channel in channels:
+        video_list = Feed(channel['rss']).download()
+        seen_db = SeenDB()
+        for item in video_list:
+            if not seen_db.exists(item['href']):
+                if is_video(item['href']):
+                    print("Downloading",item['title'],end="...")
+                    if download(item['title'],channel['download_dir'],item['href']):
+                        seen_db.add(item['href'])
+                        print("SUCCESS!")
+                    else:
+                        print("FAILED!!")
+                else:
+                    continue
+            else:
+                print(item['title'],"has been seen, skipping")
+    exit()
+
+if __name__ == "__main__":
+  arguments = docopt(__doc__, version='rss2youtube-dl v0.1')
+  #print arguments
+  #exit()
+  main(arguments)
+  exit()

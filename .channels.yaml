@@ -1,0 +1,6 @@
+outsider_press-momfeed:
+    download_dir: /media/mastertaku/ext_storage/media/mom
+    rss: https://rss.outsider.press/public.php?op=rss&id=2809&key=vyil9q5e84f8ced4573
+outsider_press-interesting:
+    rss: https://rss.outsider.press/public.php?op=rss&id=-1460&key=xexmt25ec46090f2c8c
+    download_dir: /media/mastertaku/ext_storage/media/interesting-videos
