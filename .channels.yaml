@@ -4,3 +4,42 @@ outsider_press-momfeed:
 outsider_press-interesting:
     rss: https://rss.outsider.press/public.php?op=rss&id=-1460&key=xexmt25ec46090f2c8c
     download_dir: /media/mastertaku/ext_storage/media/interesting-videos
+mylist:
+    rss: https://rss.outsider.press/public.php?op=rss&id=-1467&key=ejvjwe5faf8c0d2a053
+    download_dir: /media/mastertaku/ext_storage/media/MY_DOWNLOADS
+spitting-image:
+    rss: https://www.youtube.com/feeds/videos.xml?channel_id=UCCov3Uxwgh6Fq_2F7oW9-hA
+    download_dir: /media/mastertaku/ext_storage/media/SpittingImage
+    filter: "Full Episode"
+ShowMustGoOn:
+    rss: https://www.youtube.com/feeds/videos.xml?channel_id=UCdmPjhKMaXNNeCr1FjuMvag
+    download_dir: /media/mastertaku/ext_storage/media/Live Plays
+    filter: 
+        - "FULL STAGE SHOW"
+        - "FULL SHOW"
+        - "FULL STAGE PLAY"
+QI-XL:
+    rss: https://www.youtube.com/feeds/videos.xml?channel_id=UCNWdtlXduDBmKq3QHqlEg-g
+    download_dir: /media/mastertaku/ext_storage/media/QI
+    filter: "QI XL"
+NationalTheater:
+    rss: https://www.youtube.com/feeds/videos.xml?channel_id=UCUDq1XzCY0NIOYVJvEMQjqw
+    download_dir: /media/mastertaku/ext_storage/media/Live Plays
+    filter: 
+        - "FULL STAGE SHOW"
+        - "FULL SHOW"
+        - "FULL STAGE PLAY"
+StratfordFestival:
+    rss: https://www.youtube.com/feeds/videos.xml?channel_id=UC_1Ricuv8kk5oUwJn4K4r7Q
+    download_dir: /media/mastertaku/ext_storage/media/Live Plays
+    filter: 
+        - "FULL STAGE SHOW"
+        - "FULL SHOW"
+        - "FULL STAGE PLAY"
+ShakespearsGlobe:
+    rss: https://www.youtube.com/feeds/videos.xml?channel_id=UCwN-jwNNNQN-8sfKG-qg8uA
+    download_dir: /media/mastertaku/ext_storage/media/Live Plays
+    filter: 
+        - "FULL STAGE SHOW"
+        - "FULL SHOW"
+        - "FULL STAGE PLAY"

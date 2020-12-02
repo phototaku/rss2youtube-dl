@@ -2,7 +2,7 @@ from pathlib import Path
 
 class SeenDB:
     def __init__(self):
-        self.db = '.seen.db'
+        self.db = '/home/mastertaku/Programming/Python/feedDownloader/.seen.db'
         Path(self.db).touch()
 
     def add(self,item:str) -> bool:
@@ -22,3 +22,4 @@ class SeenDB:
             return False
         except:
             return False            
+

@@ -6,7 +6,7 @@ class Channel:
         if args:
             config_file = args[0]
         else:
-            config_file = '.channels.yaml'
+            config_file = '/home/mastertaku/Programming/Python/feedDownloader/.channels.yaml'
         Path(config_file).touch()
         with open(config_file,'r') as file:
             self.config = yaml.full_load(file)
@@ -19,3 +19,12 @@ if __name__ == "__main__":
     for item in configs.list():
         print('RSS:',item['rss'])
         print('Directory:',item['download_dir'])
+        if 'filter' in item:
+            if isinstance(item['filter'],list):
+                print('Filters',end=": ")
+                for filter in item['filter']:
+                    print(filter)
+            else:
+                print('Filters:',item['filter'])
+        else:
+            print('Filters: NONE')

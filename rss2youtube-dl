@@ -1,30 +1,55 @@
 #!/usr/bin/env python3
 """
 rss2youtube-dl
-Desc: A small app that downloads and parses youtube channels for download by youtube-dl
-v.0.1
+Desc: A small app that downloads and parses rss feeds for videos to download with youtube-dl
+v.0.5.1
 2020 by antiSOFT
 
 Usage:
-  rss2youtube-dl [-c CONFIGFILE]
+  rss2youtube-dl [-c CONFIGFILE] [--demo] [--cron]
   rss2youtube-dl --help
   rss2youtube-dl --version
 
 Options:
   -c CONFIGFILE                    Use custom configuration file             
+  -d --demo                        Don't save or add to seen
+  -C --cron                        Script being run by cron, don't be interactive.
   -h --help                        Show this screen
   --version                        Show version info
 
 """
+
+#
+# TODO:
+#
+# [X] handle multiple filters
+# [ ] handle filter to directory that overrides a default
+# [X] problem_db and ignore_db
+# [ ] add playlist handler
+# [ ] 
+
 from docopt import docopt
 from feed import Feed
 from seendb import SeenDB
+from problemdb import ProblemDB
 from channel import Channel
 import youtube_dl
 import os
 import time
 import sys
 import re
+
+def ydl_opts(title,path):
+    ydlopts = {
+        "outtmpl": f"{path}/{title}.%(ext)s",
+        "format": "best",
+        "quiet": True,
+        "retries": 3,
+        "noplaylist": True,
+        "nooverwrites": True,
+        "continued": True,
+        }
+    return ydlopts
 
 def is_video(item):
     if re.search(r'youtu.be', item) or re.search(r'youtube.com', item):
@@ -35,26 +60,25 @@ def is_video(item):
         return True
     return False
 
-def download(title,path,rss): 
-    ydl_opts = {
-        "outtmpl": f"{path}/{title}.%(ext)s",
-        "format": "best",
-        "quiet": True,
-        "retries": 3,
-        "nooverwrites": False,
-        "continuedl": True,
-    } 
+def download(title,path,href): 
     try:
-        with youtube_dl.YoutubeDL(ydl_opts) as ydl: 
-            ydl.download([rss]) 
+        with youtube_dl.YoutubeDL(ydl_opts(title,path)) as ydl: 
+            ydl.download([href]) 
         return True
     except:
         return False
 
-def printResult(unseen):
-    for item in unseen:
-        print(item)
-    return
+def in_filter(filter,title):
+    if not isinstance(filter,list):
+        filter = [filter]
+    for pattern in filter:
+        #print(pattern,"->",title)
+        if re.search(pattern,title):
+            return True
+        else:
+            continue
+    #print("false")
+    return False
 
 def main(args):
     if args['-c']:
@@ -65,27 +89,54 @@ def main(args):
             exit(1)
     else:    
         channels = Channel().list()
+    seen_db = SeenDB()
+    problem_db = ProblemDB()
     for channel in channels:
+        #print(channel)
         video_list = Feed(channel['rss']).download()
-        seen_db = SeenDB()
-        for item in video_list:
-            if not seen_db.exists(item['href']):
-                if is_video(item['href']):
-                    print("Downloading",item['title'],end="...")
-                    if download(item['title'],channel['download_dir'],item['href']):
-                        seen_db.add(item['href'])
-                        print("SUCCESS!")
+        if video_list:
+            for item in video_list:
+                if ('filter' in channel.keys() and in_filter(channel['filter'],item['title'])) or ('filter' not in channel.keys()):
+                    print(item['title'],end="...",flush=True)
+                    if not seen_db.exists(item['href']) and not problem_db.is_ignored(item['href']):
+                        if is_video(item['href']):
+                            print("Downloading",end=": ",flush=True)
+                            if not args['--demo']:
+                                if download(item['title'],channel['download_dir'],item['href']):
+                                    seen_db.add(item['href'])
+                                    print("SUCCESS!")
+                                else:
+                                    problem_db.add(item['href'])
+                                    print("FAILED!!")
+                            else:
+                                print("DEMO!")
+                        else:
+                            continue
                     else:
-                        print("FAILED!!")
-                else:
-                    continue
-            else:
-                print(item['title'],"has been seen, skipping")
+                        print("SEEN!")
+    
+    if len(problem_db):
+        print("\nThere were problems with the following links:") 
+        if not args['--cron']:
+            for problem in problem_db:
+                while True:
+                    try:
+                        answer = input(problem.strip() + ": Ignore? [y/n] ")
+                        if answer[0].lower() != 'y' and answer[0].lower() != 'n':
+                            raise ValueError
+                        else:
+                            if answer[0].lower() == 'y':
+                                problem_db.ignore(problem)
+                            break
+                    except ValueError:
+                        print("Enter yes or no....")
+        else:
+            print(problem_db)
     exit()
 
 if __name__ == "__main__":
-  arguments = docopt(__doc__, version='rss2youtube-dl v0.1')
-  #print arguments
+  arguments = docopt(__doc__, version='rss2youtube-dl v0.5.1')
+  #print(arguments)
   #exit()
   main(arguments)
   exit()
