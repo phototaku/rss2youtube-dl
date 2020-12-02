@@ -25,6 +25,7 @@ Options:
 # [X] handle multiple filters
 # [ ] handle filter to directory that overrides a default
 # [X] problem_db and ignore_db
+# [ ] make problem_db prompt more human readable
 # [ ] add playlist handler
 # [ ] 
 
@@ -39,13 +40,13 @@ import time
 import sys
 import re
 
-def ydl_opts(title,path):
+def ydl_opts(title,path,is_playlist):
     ydlopts = {
         "outtmpl": f"{path}/{title}.%(ext)s",
         "format": "best",
         "quiet": True,
         "retries": 3,
-        "noplaylist": True,
+        "noplaylist": (not is_playlist),
         "nooverwrites": True,
         "continued": True,
         }
@@ -60,9 +61,9 @@ def is_video(item):
         return True
     return False
 
-def download(title,path,href): 
+def download(title,path,href,is_playlist=False): 
     try:
-        with youtube_dl.YoutubeDL(ydl_opts(title,path)) as ydl: 
+        with youtube_dl.YoutubeDL(ydl_opts(title,path,is_playlist)) as ydl: 
             ydl.download([href]) 
         return True
     except:
