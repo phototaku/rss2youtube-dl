@@ -122,8 +122,8 @@ def main(args):
             for problem in problem_db:
                 while True:
                     try:
-                        answer = input(problem.strip() + ": Ignore? [y/n] ")
-                        if answer[0].lower() != 'y' and answer[0].lower() != 'n':
+                        answer = input(problem.strip() + ": Ignore? (y/[n]) ")
+                        if answer[0].lower() != 'y' and answer[0].lower() != 'n' and len(answer) < 1:
                             raise ValueError
                         else:
                             if answer[0].lower() == 'y':
