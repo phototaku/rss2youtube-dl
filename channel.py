@@ -1,12 +1,14 @@
 import yaml
 from pathlib import Path
+import os
 
 class Channel:
     def __init__(self,*args):
         if args:
             config_file = args[0]
         else:
-            config_file = '/home/mastertaku/Programming/Python/feedDownloader/.channels.yaml'
+            os.chdir(os.path.dirname(os.path.realpath(__file__)))
+            config_file = '.channels.yaml'
         Path(config_file).touch()
         with open(config_file,'r') as file:
             self.config = yaml.full_load(file)

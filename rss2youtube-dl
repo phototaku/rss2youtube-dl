@@ -6,12 +6,13 @@ v.0.5.1
 2020 by antiSOFT
 
 Usage:
-  rss2youtube-dl [-c CONFIGFILE] [--demo] [--cron]
+  rss2youtube-dl [-dCi] [-c CONFIGFILE]
   rss2youtube-dl --help
   rss2youtube-dl --version
 
 Options:
   -c CONFIGFILE                    Use custom configuration file             
+  -i --interactive                 Interactive mode
   -d --demo                        Don't save or add to seen
   -C --cron                        Script being run by cron, don't be interactive.
   -h --help                        Show this screen
@@ -27,7 +28,7 @@ Options:
 # [X] problem_db and ignore_db
 # [ ] make problem_db prompt more human readable
 # [ ] add playlist handler
-# [ ] 
+# [ ] interactive mode that bypasses filters and asks on each unseen video if you want to DL it.
 
 from docopt import docopt
 from feed import Feed
