@@ -28,7 +28,7 @@ Options:
 # [X] problem_db and ignore_db
 # [ ] make problem_db prompt more human readable
 # [ ] add playlist handler
-# [ ] interactive mode that bypasses filters and asks on each unseen video if you want to DL it.
+# [X] interactive mode that bypasses filters and asks on each unseen video if you want to DL it.
 
 from docopt import docopt
 from feed import Feed
@@ -98,10 +98,34 @@ def main(args):
         video_list = Feed(channel['rss']).download()
         if video_list:
             for item in video_list:
-                if ('filter' in channel.keys() and in_filter(channel['filter'],item['title'])) or ('filter' not in channel.keys()):
+                if args['--interactive']:
+                    bypass_filter = True
+                else:
+                    bypass_filter = False
+                if ('filter' in channel.keys() and in_filter(channel['filter'],item['title'])) or ('filter' not in channel.keys()) or bypass_filter:
                     print(item['title'],end="...",flush=True)
                     if not seen_db.exists(item['href']) and not problem_db.is_ignored(item['href']):
                         if is_video(item['href']):
+                            if args['--interactive']:
+                                decision = None
+                                while decision == None:
+                                    try:
+                                        answer = input('Download ? (y/[n]) ')
+                                        if answer[0] == 'y' or answer[0] == 'n' or len(answer) == 0:
+                                            if answer[0] == 'y':
+                                                decision = True
+                                            else:
+                                                decision = False                    
+                                        else:
+                                            raise ValueError
+                                    except ValueError:
+                                        print('You must enter y or n.')
+                                    except IndexError:
+                                        decision = False
+                                if not decision:
+                                    seen_db.add(item['href'])
+                                    print('SKIPPING!!')
+                                    continue
                             print("Downloading",end=": ",flush=True)
                             if not args['--demo']:
                                 if download(item['title'],channel['download_dir'],item['href']):
@@ -124,7 +148,7 @@ def main(args):
                 while True:
                     try:
                         answer = input(problem.strip() + ": Ignore? (y/[n]) ")
-                        if answer[0].lower() != 'y' and answer[0].lower() != 'n' and len(answer) < 1:
+                        if answer[0].lower() != 'y' and answer[0].lower() != 'n' and len(answer) != 0:
                             raise ValueError
                         else:
                             if answer[0].lower() == 'y':

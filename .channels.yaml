@@ -40,6 +40,7 @@ ShakespearsGlobe:
     rss: https://www.youtube.com/feeds/videos.xml?channel_id=UCwN-jwNNNQN-8sfKG-qg8uA
     download_dir: /media/mastertaku/ext_storage/media/Live Plays
     filter: 
+        - "Globe Advent"
         - "FULL STAGE SHOW"
         - "FULL SHOW"
         - "FULL STAGE PLAY"
