@@ -33,7 +33,7 @@ StratfordFestival:
     rss: https://www.youtube.com/feeds/videos.xml?channel_id=UC_1Ricuv8kk5oUwJn4K4r7Q
     download_dir: /media/mastertaku/ext_storage/media/Live Plays
     filter: 
-        - "FULL STAGE SHOW"
+        - "LIVE VIEWING PARTY"
         - "FULL SHOW"
         - "FULL STAGE PLAY"
 ShakespearsGlobe:
@@ -41,6 +41,4 @@ ShakespearsGlobe:
     download_dir: /media/mastertaku/ext_storage/media/Live Plays
     filter: 
         - "Globe Advent"
-        - "FULL STAGE SHOW"
-        - "FULL SHOW"
-        - "FULL STAGE PLAY"
+        - "for Free"

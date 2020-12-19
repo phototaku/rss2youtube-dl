@@ -25,6 +25,7 @@ Options:
 #
 # [X] handle multiple filters
 # [ ] handle filter to directory that overrides a default
+# [X] add progress
 # [X] problem_db and ignore_db
 # [ ] make problem_db prompt more human readable
 # [ ] add playlist handler
@@ -41,6 +42,25 @@ import time
 import sys
 import re
 
+percent = '  0.0'
+
+class MyLogger(object):
+    def debug(self, msg):
+        pass
+
+    def warning(self, msg):
+        pass
+
+    def error(self, msg):
+        print(msg,flush=True)
+
+def ydl_hook(d):
+    global percent
+    if '_percent_str' not in d: return
+    print('\b' * len(percent), end="", flush=True)
+    percent = d['_percent_str']
+    print(percent,end='',flush=True)
+
 def ydl_opts(title,path,is_playlist):
     ydlopts = {
         "outtmpl": f"{path}/{title}.%(ext)s",
@@ -50,6 +70,8 @@ def ydl_opts(title,path,is_playlist):
         "noplaylist": (not is_playlist),
         "nooverwrites": True,
         "continued": True,
+        'logger': MyLogger(),
+        "progress_hooks":[ydl_hook],
         }
     return ydlopts
 
@@ -67,7 +89,11 @@ def download(title,path,href,is_playlist=False):
         with youtube_dl.YoutubeDL(ydl_opts(title,path,is_playlist)) as ydl: 
             ydl.download([href]) 
         return True
-    except:
+    except _percent_str:
+        pass
+    except Exception as e:
+        print(e)
+        exit(1)
         return False
 
 def in_filter(filter,title):
@@ -83,6 +109,7 @@ def in_filter(filter,title):
     return False
 
 def main(args):
+    global percent
     if args['-c']:
         if os.path.isfile(args['-c']):
             channels = Channel(args['-c']).list()
@@ -119,6 +146,7 @@ def main(args):
                                         else:
                                             raise ValueError
                                     except ValueError:
+                                        #exit(1)
                                         print('You must enter y or n.')
                                     except IndexError:
                                         decision = False
@@ -126,14 +154,21 @@ def main(args):
                                     seen_db.add(item['href'])
                                     print('SKIPPING!!')
                                     continue
-                            print("Downloading",end=": ",flush=True)
+                            if args['--interactive']:
+                                CURSOR_UP_ONE = '\x1b[1A' 
+                                ERASE_LINE = '\x1b[2K'
+                                print(CURSOR_UP_ONE + ERASE_LINE + item['title'],end="...",flush=True)
+                            print("Downloading",end=f": {percent}",flush=True)
                             if not args['--demo']:
                                 if download(item['title'],channel['download_dir'],item['href']):
                                     seen_db.add(item['href'])
-                                    print("SUCCESS!")
+                                    print('\b' * (len(percent)+13), end="", flush=True)
+                                    percent = '  0.0'
+                                    print("SUCCESS!" + ' ' * 15)
                                 else:
                                     problem_db.add(item['href'])
-                                    print("FAILED!!")
+                                    print('\b' * (len(percent)+13), end="", flush=True)
+                                    print("FAILED!!" + ' ' * 15)
                             else:
                                 print("DEMO!")
                         else:
