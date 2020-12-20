@@ -27,7 +27,7 @@ Options:
 # [ ] handle filter to directory that overrides a default
 # [X] add progress
 # [X] problem_db and ignore_db
-# [ ] make problem_db prompt more human readable
+# [X] make problem_db prompt more human readable
 # [ ] add playlist handler
 # [X] interactive mode that bypasses filters and asks on each unseen video if you want to DL it.
 
@@ -43,6 +43,7 @@ import sys
 import re
 
 percent = '  0.0'
+the_error = ''
 
 class MyLogger(object):
     def debug(self, msg):
@@ -52,7 +53,7 @@ class MyLogger(object):
         pass
 
     def error(self, msg):
-        print(msg,flush=True)
+        pass
 
 def ydl_hook(d):
     global percent
@@ -85,15 +86,15 @@ def is_video(item):
     return False
 
 def download(title,path,href,is_playlist=False): 
+    global the_error
     try:
         with youtube_dl.YoutubeDL(ydl_opts(title,path,is_playlist)) as ydl: 
             ydl.download([href]) 
         return True
-    except _percent_str:
-        pass
     except Exception as e:
-        print(e)
-        exit(1)
+        the_error = str(e).split(':')[1].strip()
+        #print(e)
+        #exit(1)
         return False
 
 def in_filter(filter,title):
@@ -109,7 +110,7 @@ def in_filter(filter,title):
     return False
 
 def main(args):
-    global percent
+    global percent, the_error
     if args['-c']:
         if os.path.isfile(args['-c']):
             channels = Channel(args['-c']).list()
@@ -166,9 +167,9 @@ def main(args):
                                     percent = '  0.0'
                                     print("SUCCESS!" + ' ' * 15)
                                 else:
-                                    problem_db.add(item['href'])
+                                    problem_db.add(item['title'],item['href'])
                                     print('\b' * (len(percent)+13), end="", flush=True)
-                                    print("FAILED!!" + ' ' * 15)
+                                    print(f"FAILED!! {the_error}")
                             else:
                                 print("DEMO!")
                         else:
@@ -182,7 +183,8 @@ def main(args):
             for problem in problem_db:
                 while True:
                     try:
-                        answer = input(problem.strip() + ": Ignore? (y/[n]) ")
+                        answer = input(f"{problem}: Ignore? (y/[n]) ")
+                        if len(answer) == 0: break
                         if answer[0].lower() != 'y' and answer[0].lower() != 'n' and len(answer) != 0:
                             raise ValueError
                         else:

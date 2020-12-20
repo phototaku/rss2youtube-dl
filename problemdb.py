@@ -5,6 +5,7 @@ class ProblemDB:
         self.ignore_db_path = '/home/mastertaku/Programming/Python/feedDownloader/.ignore.db'
         Path(self.ignore_db_path).touch()
         self.db = []
+        self.db_links = {}
         with open(self.ignore_db_path, 'r') as database:
             self.ignore_db = database.readlines()
     
@@ -17,14 +18,17 @@ class ProblemDB:
     def __getitem__(self,i):
         return self.db[i]
 
-    def add(self,item:str) -> bool:
-        self.db.append(item + "\n")
+    def add(self,title:str,item:str) -> bool:
+        self.db.append(title)
+        self.db_links[title] = f"{item}\n"
+        return True
     
-    def ignore(self,item:str) -> bool:
+    def ignore(self,title:str) -> bool:
         try:
             with open(self.ignore_db_path, 'a') as database:
-                self.db.pop(self.db.index(item))
-                database.write(item)
+                self.db.pop(self.db.index(title))
+                database.write(self.db_links[title])
+                self.db_links.pop(title)
             return True
         except:
             return False
