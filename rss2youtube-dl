@@ -28,7 +28,7 @@ Options:
 # [X] add progress
 # [X] problem_db and ignore_db
 # [X] make problem_db prompt more human readable
-# [ ] add playlist handler
+# [X] add playlist handler
 # [X] interactive mode that bypasses filters and asks on each unseen video if you want to DL it.
 
 from docopt import docopt
@@ -44,6 +44,11 @@ import re
 
 percent = '  0.0'
 the_error = ''
+
+def delete_last_line():
+    CURSOR_UP_ONE = '\x1b[1A' 
+    ERASE_LINE = '\x1b[2K'
+    print(CURSOR_UP_ONE + ERASE_LINE,end="",flush=True)
 
 class MyLogger(object):
     def debug(self, msg):
@@ -62,13 +67,12 @@ def ydl_hook(d):
     percent = d['_percent_str']
     print(percent,end='',flush=True)
 
-def ydl_opts(title,path,is_playlist):
+def ydl_opts(title,path):
     ydlopts = {
         "outtmpl": f"{path}/{title}.%(ext)s",
         "format": "best",
         "quiet": True,
         "retries": 3,
-        "noplaylist": (not is_playlist),
         "nooverwrites": True,
         "continued": True,
         'logger': MyLogger(),
@@ -85,17 +89,43 @@ def is_video(item):
         return True
     return False
 
-def download(title,path,href,is_playlist=False): 
-    global the_error
+def video_list(url,title='',path=''):
     try:
-        with youtube_dl.YoutubeDL(ydl_opts(title,path,is_playlist)) as ydl: 
-            ydl.download([href]) 
-        return True
-    except Exception as e:
-        the_error = str(e).split(':')[1].strip()
-        #print(e)
-        #exit(1)
+        with youtube_dl.YoutubeDL(ydl_opts(title,path)) as ydl:
+            rv = ydl.extract_info(url, False)
+    except youtube_dl.utils.DownloadError as e:
+        if "Premieres" in str(e):
+            raise ValueError
+        else:
+            pass
+    if '_type' not in rv: 
+        return {title: url}
+    print(f"{title}...PLAYLIST!")
+    rv_list = {}
+    for entry in rv['entries']:
+        rv_list[entry['title']] = entry['webpage_url']
+    return rv_list
+
+def download(title,path,href): 
+    global the_error,percent
+    try:
+        urls = video_list(href,title,path)
+    except ValueError:
+        the_error = "Waiting for premiere."
         return False
+    #print(urls)
+    for video_title in urls.keys():
+        try:
+            with youtube_dl.YoutubeDL(ydl_opts(video_title,path)) as ydl:
+                print(f"{video_title}...Downloading",end=f": {percent}",flush=True)
+                ydl.download([urls[video_title]]) 
+        except Exception as e:
+            the_error = str(e)
+            return False
+        print('\b' * (len(percent)+13), end="", flush=True)
+        percent = '  0.0'
+        print("SUCCESS!" + ' ' * 15)
+    return True
 
 def in_filter(filter,title):
     if not isinstance(filter,list):
@@ -131,14 +161,13 @@ def main(args):
                 else:
                     bypass_filter = False
                 if ('filter' in channel.keys() and in_filter(channel['filter'],item['title'])) or ('filter' not in channel.keys()) or bypass_filter:
-                    print(item['title'],end="...",flush=True)
                     if not seen_db.exists(item['href']) and not problem_db.is_ignored(item['href']):
                         if is_video(item['href']):
                             if args['--interactive']:
                                 decision = None
                                 while decision == None:
                                     try:
-                                        answer = input('Download ? (y/[n]) ')
+                                        answer = input(f"Download {item['title']}? (y/[n]) ")
                                         if answer[0] == 'y' or answer[0] == 'n' or len(answer) == 0:
                                             if answer[0] == 'y':
                                                 decision = True
@@ -151,31 +180,24 @@ def main(args):
                                         print('You must enter y or n.')
                                     except IndexError:
                                         decision = False
+                                delete_last_line()
                                 if not decision:
                                     seen_db.add(item['href'])
-                                    print('SKIPPING!!')
+                                    print(f"{item['title']}...SKIPPING!!")
                                     continue
-                            if args['--interactive']:
-                                CURSOR_UP_ONE = '\x1b[1A' 
-                                ERASE_LINE = '\x1b[2K'
-                                print(CURSOR_UP_ONE + ERASE_LINE + item['title'],end="...",flush=True)
-                            print("Downloading",end=f": {percent}",flush=True)
                             if not args['--demo']:
                                 if download(item['title'],channel['download_dir'],item['href']):
                                     seen_db.add(item['href'])
-                                    print('\b' * (len(percent)+13), end="", flush=True)
-                                    percent = '  0.0'
-                                    print("SUCCESS!" + ' ' * 15)
                                 else:
                                     problem_db.add(item['title'],item['href'])
                                     print('\b' * (len(percent)+13), end="", flush=True)
-                                    print(f"FAILED!! {the_error}")
+                                    print(f"{item['title']}...FAILED!! {the_error}")
                             else:
                                 print("DEMO!")
                         else:
                             continue
                     else:
-                        print("SEEN!")
+                        print(f"{item['title']}...SEEN!")
     
     if len(problem_db):
         print("\nThere were problems with the following links:") 
