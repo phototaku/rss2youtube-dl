@@ -29,6 +29,7 @@ Options:
 # [X] problem_db and ignore_db
 # [X] make problem_db prompt more human readable
 # [X] add playlist handler
+# [X] playlist downloads to folder
 # [X] interactive mode that bypasses filters and asks on each unseen video if you want to DL it.
 
 from docopt import docopt
@@ -99,11 +100,11 @@ def video_list(url,title='',path=''):
         else:
             pass
     if '_type' not in rv: 
-        return {title: url}
+        return {title: {'url':url,'path':path}}
     print(f"{title}...PLAYLIST!")
     rv_list = {}
     for entry in rv['entries']:
-        rv_list[entry['title']] = entry['webpage_url']
+        rv_list[entry['title']] = {'url':entry['webpage_url'],'path':f"{path}/{title}"}
     return rv_list
 
 def download(title,path,href): 
@@ -116,9 +117,9 @@ def download(title,path,href):
     #print(urls)
     for video_title in urls.keys():
         try:
-            with youtube_dl.YoutubeDL(ydl_opts(video_title,path)) as ydl:
+            with youtube_dl.YoutubeDL(ydl_opts(video_title,urls[video_title]['path'])) as ydl:
                 print(f"{video_title}...Downloading",end=f": {percent}",flush=True)
-                ydl.download([urls[video_title]]) 
+                ydl.download([urls[video_title]['url']]) 
         except Exception as e:
             the_error = str(e)
             return False
