@@ -2,7 +2,7 @@
 """
 rss2youtube-dl
 Desc: A utility that downloads and parses rss feeds for videos to download with youtube-dl
-v.0.8
+v.1.0
 2020 by antiSOFT
 
 Usage:
@@ -33,6 +33,8 @@ Options:
 # [X] playlist downloads to folder
 # [X] interactive mode that bypasses filters and asks on each unseen video if you want to DL it.
 # [X] get RSS from channel url
+# [ ] Refactor the code to get rid of the deep if/then
+#
 
 from docopt import docopt
 from feed import Feed
@@ -52,6 +54,15 @@ def delete_last_line():
     CURSOR_UP_ONE = '\x1b[1A' 
     ERASE_LINE = '\x1b[2K'
     print(CURSOR_UP_ONE + ERASE_LINE,end="",flush=True)
+
+class ytdlError(Exception):
+    def __init__(self,message="YT-DL ERROR!",err=""):
+        self.message = message
+        self.err = err
+        super().__init__(self.message)
+    
+    def __str__(self):
+        return f'{self.message} {self.err}\n'
 
 class MyLogger(object):
     def debug(self, msg):
@@ -94,19 +105,25 @@ def is_video(item):
 
 def video_list(url,title='',path=''):
     try:
+        #print("Collecting video info...",end="",flush=True)
         with youtube_dl.YoutubeDL(ydl_opts(title,path)) as ydl:
             rv = ydl.extract_info(url, False)
     except youtube_dl.utils.DownloadError as e:
         if "Premieres" in str(e):
             raise ValueError
+        elif "no video" in str(e):
+            raise ytdlError
         else:
-            pass
+            print(e)
+            exit(1)
+    #print("Done.")
     if '_type' not in rv: 
         return {title: {'url':url,'path':path}}
-    print(f"{title}...PLAYLIST!")
+    print(f"{title}...PLAYLIST!",flush=True)
     rv_list = {}
     for entry in rv['entries']:
         rv_list[entry['title']] = {'url':entry['webpage_url'],'path':f"{path}/{title}"}
+        print(f"{entry['title']} added.",flush=True)
     return rv_list
 
 def download(title,path,href): 
@@ -116,11 +133,14 @@ def download(title,path,href):
     except ValueError:
         the_error = "Waiting for premiere."
         return False
+    except ytdlError:
+        the_error = "No video found."
+        return False
     #print(urls)
     for video_title in urls.keys():
         try:
+            print(f"{video_title}...Downloading",end=f": {percent}",flush=True)
             with youtube_dl.YoutubeDL(ydl_opts(video_title,urls[video_title]['path'])) as ydl:
-                print(f"{video_title}...Downloading",end=f": {percent}",flush=True)
                 ydl.download([urls[video_title]['url']]) 
         except Exception as e:
             the_error = str(e)
@@ -157,20 +177,25 @@ def main(args):
     global percent, the_error
     if args['--config']:
         if os.path.isfile(args['--config']):
+            print(f"Loading custom configuration: {args['--config']}")
             channels = Channel(args['--config']).list()
         else:
             print("File",args['--config'],"does not exist")
             exit(1)
-    else:    
+    else:
+        print('Loading default configuration.')
         channels = Channel().list()
     seen_db = SeenDB()
     problem_db = ProblemDB()
     for channel in channels:
         #print(channel)
+        print("Downloading feed list...",end="",flush=True)
         video_list = Feed(channel['rss']).download()
         if video_list:
+            print("Done.")
             for item in video_list:
                 if args['--interactive']:
+                    print("Interactive mode.")
                     bypass_filter = True
                 else:
                     bypass_filter = False
@@ -212,7 +237,8 @@ def main(args):
                             continue
                     else:
                         print(f"{item['title']}...SEEN!")
-    
+        else:
+            print("Failed.")
     if len(problem_db):
         print("\nThere were problems with the following links:") 
         if not args['--cron']:
@@ -234,7 +260,7 @@ def main(args):
     exit()
 
 if __name__ == "__main__":
-  arguments = docopt(__doc__, version='rss2youtube-dl v0.8')
+  arguments = docopt(__doc__, version='rss2youtube-dl v.1.0')
   #print(arguments)
   #exit()
   if arguments['--rss-from-channel']:

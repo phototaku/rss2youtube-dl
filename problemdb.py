@@ -2,7 +2,7 @@ from pathlib import Path
 
 class ProblemDB:
     def __init__(self):
-        self.ignore_db_path = '/home/mastertaku/Programming/Python/feedDownloader/.ignore.db'
+        self.ignore_db_path = '.ignore.db'
         Path(self.ignore_db_path).touch()
         self.db = []
         self.db_links = {}

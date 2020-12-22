@@ -2,7 +2,7 @@ from pathlib import Path
 
 class SeenDB:
     def __init__(self):
-        self.db = '/home/mastertaku/Programming/Python/feedDownloader/.seen.db'
+        self.db = '.seen.db'
         Path(self.db).touch()
 
     def add(self,item:str) -> bool:

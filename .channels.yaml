@@ -25,22 +25,18 @@ QI-XL:
 NationalTheater:
     rss: https://www.youtube.com/feeds/videos.xml?channel_id=UCUDq1XzCY0NIOYVJvEMQjqw
     download_dir: /media/mastertaku/ext_storage/media/Live Plays
-    filter: 
-        - "FULL STAGE SHOW"
-        - "FULL SHOW"
-        - "FULL STAGE PLAY"
+    filter: "Full Performance"
 StratfordFestival:
     rss: https://www.youtube.com/feeds/videos.xml?channel_id=UC_1Ricuv8kk5oUwJn4K4r7Q
     download_dir: /media/mastertaku/ext_storage/media/Live Plays
-    filter: 
-        - "LIVE VIEWING PARTY"
-        - "FULL SHOW"
-        - "FULL STAGE PLAY"
+    filter: "LIVE VIEWING PARTY"
 ShakespearsGlobe:
     rss: https://www.youtube.com/feeds/videos.xml?channel_id=UCwN-jwNNNQN-8sfKG-qg8uA
     download_dir: /media/mastertaku/ext_storage/media/Live Plays
     filter: 
         - "Globe Advent"
         - "for Free"
-
-        
+Mundo-HOG:
+    rss: https://www.youtube.com/feeds/videos.xml?channel_id=UCq_ZoGyeCb-1nUCD9z8Fzcg
+    download_dir: /media/mastertaku/ext_storage/media/House of Games
+    filter: "House of Games"
