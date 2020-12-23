@@ -6,7 +6,7 @@ v.1.0
 2020 by antiSOFT
 
 Usage:
-  rss2youtube-dl [-dCi] [-c CONFIGFILE] [-r CHANNEL]
+  rss2youtube-dl [-dCDi] [-c CONFIGFILE] [-r CHANNEL]
   rss2youtube-dl --help
   rss2youtube-dl --version
 
@@ -15,6 +15,7 @@ Options:
   -i --interactive                      Interactive mode
   -d --demo                             Don't save or add to seen
   -C --cron                             Script being run by cron, don't be interactive.
+  -D --debug                            Print debug info to screen.
   -r --rss-from-channel CHANNEL         Get rss url for youtube channel url provided
   -h --help                             Show this screen
   --version                             Show version info
@@ -41,6 +42,7 @@ from feed import Feed
 from seendb import SeenDB
 from problemdb import ProblemDB
 from channel import Channel
+from errors import *
 import youtube_dl
 import os
 import time
@@ -50,39 +52,46 @@ import re
 percent = '  0.0'
 the_error = ''
 arguments = ''
+basepath = os.path.dirname(os.path.abspath(__file__))
+basename = os.path.basename(__file__)
+
+def print(*args,**kwargs):
+    try:
+        end = kwargs['end']
+    except:
+        end = '\n'
+    try:
+        err = kwargs['error']
+        sys.stderr.write(" ".join(args) + end)
+    except:
+        sys.stdout.write(" ".join(args) + end)
 
 def delete_last_line():
     CURSOR_UP_ONE = '\x1b[1A' 
     ERASE_LINE = '\x1b[2K'
     print(CURSOR_UP_ONE + ERASE_LINE,end="",flush=True)
 
-class ytdlNoVideo(Exception):
-    def __init__(self,message="YT-DL ERROR!",err=""):
-        self.message = message
-        self.err = err
-        super().__init__(self.message)
-    
-    def __str__(self):
-        return f'{self.message} {self.err}\n'
-
-class ytdlCopyright(Exception):
-    def __init__(self,message="YT-DL ERROR!",err=""):
-        self.message = message
-        self.err = err
-        super().__init__(self.message)
-    
-    def __str__(self):
-        return f'{self.message} {self.err}\n'
-
 class MyLogger(object):
+    def __init__(self):
+        global basepath
+        self.logfile = os.path.join(basepath,'.error.log')
+
     def debug(self, msg):
-        pass
+        global arguments
+        if arguments['--debug']:
+
+            print(msg)
 
     def warning(self, msg):
         pass
 
     def error(self, msg):
-        pass
+        try:
+            with open(self.logfile, 'a') as log:
+                log.write(msg)
+            return True
+        except:
+            return False
 
 def ydl_hook(d):
     global percent
@@ -126,7 +135,7 @@ def video_list(url,title='',path=''):
         elif "Copyright" in str(e):
             raise ytdlCopyright
         else:
-            print(e)
+            print(e,error=True)
             exit(1)
     #print("Done.")
     if '_type' not in rv: 
@@ -185,95 +194,98 @@ def get_rss(channel):
     try:
         return soup.find("link",title="RSS").get('href')
     except:
-        print("Couldn't find an RSS link for the channel provided.")
+        print("Couldn't find an RSS link for the channel provided.",error=True)
         exit(1)
 
 def main():
-    global percent, the_error,arguments
-    args = arguments
-    if args['--config']:
-        if os.path.isfile(args['--config']):
-            print(f"Loading custom configuration: {args['--config']}")
-            channels = Channel(args['--config']).list()
+    try:
+        global percent, the_error,arguments
+        args = arguments
+        if args['--config']:
+            if os.path.isfile(args['--config']):
+                print(f"Loading custom configuration: {args['--config']}")
+                channels = Channel(args['--config']).list()
+            else:
+                print("File",args['--config'],"does not exist",error=True)
+                exit(1)
         else:
-            print("File",args['--config'],"does not exist")
-            exit(1)
-    else:
-        print('Loading default configuration.')
-        channels = Channel().list()
-    seen_db = SeenDB()
-    problem_db = ProblemDB()
-    for channel in channels:
-        #print(channel)
-        print("Downloading feed list...",end="",flush=True)
-        video_list = Feed(channel['rss']).download()
-        if video_list:
-            print("Done.")
-            for item in video_list:
-                if args['--interactive']:
-                    print("Interactive mode.")
-                    bypass_filter = True
-                else:
-                    bypass_filter = False
-                if ('filter' in channel.keys() and in_filter(channel['filter'],item['title'])) or ('filter' not in channel.keys()) or bypass_filter:
-                    if not seen_db.exists(item['href']) and not problem_db.is_ignored(item['href']):
-                        if is_video(item['href']):
-                            if args['--interactive']:
-                                decision = None
-                                while decision == None:
-                                    try:
-                                        answer = input(f"Download {item['title']}? (y/[n]) ")
-                                        if answer[0] == 'y' or answer[0] == 'n' or len(answer) == 0:
-                                            if answer[0] == 'y':
-                                                decision = True
-                                            else:
-                                                decision = False                    
-                                        else:
-                                            raise ValueError
-                                    except ValueError:
-                                        #exit(1)
-                                        print('You must enter y or n.')
-                                    except IndexError:
-                                        decision = False
-                                delete_last_line()
-                                if not decision:
-                                    seen_db.add(item['href'])
-                                    print(f"{item['title']}...SKIPPING!!")
-                                    continue
-                            if not args['--demo']:
-                                if download(item['title'],channel['download_dir'],item['href']):
-                                    seen_db.add(item['href'])
-                                else:
-                                    problem_db.add(item['title'],item['href'])
-                                    print('\b' * (len(percent)+13), end="", flush=True)
-                                    print(f"{item['title']}...FAILED!! {the_error}")
-                            else:
-                                print("DEMO!")
-                        else:
-                            continue
+            print('Loading default configuration.')
+            channels = Channel().list()
+        seen_db = SeenDB()
+        problem_db = ProblemDB()
+        for channel in channels:
+            #print(channel)
+            print("Downloading feed list...",end="",flush=True)
+            video_list = Feed(channel['rss']).download()
+            if video_list:
+                print("Done.")
+                for item in video_list:
+                    if args['--interactive']:
+                        bypass_filter = True
                     else:
-                        print(f"{item['title']}...SEEN!")
-        else:
-            print("Failed.")
-    if len(problem_db):
-        print("\nThere were problems with the following links:") 
-        if not args['--cron']:
-            for problem in problem_db:
-                while True:
-                    try:
-                        answer = input(f"{problem}: Ignore? (y/[n]) ")
-                        if len(answer) == 0: break
-                        if answer[0].lower() != 'y' and answer[0].lower() != 'n' and len(answer) != 0:
-                            raise ValueError
+                        bypass_filter = False
+                    if ('filter' in channel.keys() and in_filter(channel['filter'],item['title'])) or ('filter' not in channel.keys()) or bypass_filter:
+                        if not seen_db.exists(item['href']) and not problem_db.is_ignored(item['href']):
+                            if is_video(item['href']):
+                                if args['--interactive']:
+                                    decision = None
+                                    while decision == None:
+                                        try:
+                                            answer = input(f"Download {item['title']}? (y/[n]) ")
+                                            if answer[0] == 'y' or answer[0] == 'n' or len(answer) == 0:
+                                                if answer[0] == 'y':
+                                                    decision = True
+                                                else:
+                                                    decision = False                    
+                                            else:
+                                                raise ValueError
+                                        except ValueError:
+                                            #exit(1)
+                                            print('You must enter y or n.')
+                                        except IndexError:
+                                            decision = False
+                                    delete_last_line()
+                                    if not decision:
+                                        seen_db.add(item['href'])
+                                        print(f"{item['title']}...SKIPPING!!")
+                                        continue
+                                if not args['--demo']:
+                                    if download(item['title'],channel['download_dir'],item['href']):
+                                        seen_db.add(item['href'])
+                                    else:
+                                        problem_db.add(item['title'],item['href'])
+                                        print('\b' * (len(percent)+13), end="", flush=True)
+                                        print(f"{item['title']}...FAILED!! {the_error}")
+                                else:
+                                    print("DEMO!")
+                            else:
+                                continue
                         else:
-                            if answer[0].lower() == 'y':
-                                problem_db.ignore(problem)
-                            break
-                    except ValueError:
-                        print("Enter yes or no....")
-        else:
-            print(problem_db)
-    exit()
+                            print(f"{item['title']}...SEEN!")
+            else:
+                print("Failed.")
+        if len(problem_db):
+            print("\nThere were problems with the following links:") 
+            if not args['--cron']:
+                for problem in problem_db:
+                    while True:
+                        try:
+                            answer = input(f"{problem}: Ignore? (y/[n]) ")
+                            if len(answer) == 0: break
+                            if answer[0].lower() != 'y' and answer[0].lower() != 'n' and len(answer) != 0:
+                                raise ValueError
+                            else:
+                                if answer[0].lower() == 'y':
+                                    problem_db.ignore(problem)
+                                break
+                        except ValueError:
+                            print("Enter yes or no....")
+            else:
+                print(problem_db)
+        exit()
+    except KeyboardInterrupt:
+        print("\nProgram terminating...")
+        exit(0)
 
 if __name__ == "__main__":
   arguments = docopt(__doc__, version='rss2youtube-dl v.1.0')
