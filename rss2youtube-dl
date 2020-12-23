@@ -1,4 +1,4 @@
-#!/usr/bin/env python3
+#!/usr/bin/env /home/mastertaku/Programming/Python/feedDownloader/.venv/bin/python3
 """
 rss2youtube-dl
 Desc: A utility that downloads and parses rss feeds for videos to download with youtube-dl
@@ -49,13 +49,23 @@ import re
 
 percent = '  0.0'
 the_error = ''
+arguments = ''
 
 def delete_last_line():
     CURSOR_UP_ONE = '\x1b[1A' 
     ERASE_LINE = '\x1b[2K'
     print(CURSOR_UP_ONE + ERASE_LINE,end="",flush=True)
 
-class ytdlError(Exception):
+class ytdlNoVideo(Exception):
+    def __init__(self,message="YT-DL ERROR!",err=""):
+        self.message = message
+        self.err = err
+        super().__init__(self.message)
+    
+    def __str__(self):
+        return f'{self.message} {self.err}\n'
+
+class ytdlCopyright(Exception):
     def __init__(self,message="YT-DL ERROR!",err=""):
         self.message = message
         self.err = err
@@ -112,7 +122,9 @@ def video_list(url,title='',path=''):
         if "Premieres" in str(e):
             raise ValueError
         elif "no video" in str(e):
-            raise ytdlError
+            raise ytdlNoVideo
+        elif "Copyright" in str(e):
+            raise ytdlCopyright
         else:
             print(e)
             exit(1)
@@ -133,8 +145,11 @@ def download(title,path,href):
     except ValueError:
         the_error = "Waiting for premiere."
         return False
-    except ytdlError:
+    except ytdlNoVideo:
         the_error = "No video found."
+        return False
+    except ytdlCopyright:
+        the_error = "Copyright block!"
         return False
     #print(urls)
     for video_title in urls.keys():
@@ -173,8 +188,9 @@ def get_rss(channel):
         print("Couldn't find an RSS link for the channel provided.")
         exit(1)
 
-def main(args):
-    global percent, the_error
+def main():
+    global percent, the_error,arguments
+    args = arguments
     if args['--config']:
         if os.path.isfile(args['--config']):
             print(f"Loading custom configuration: {args['--config']}")
@@ -266,5 +282,5 @@ if __name__ == "__main__":
   if arguments['--rss-from-channel']:
       print(get_rss(arguments['--rss-from-channel']))
       exit(0)
-  main(arguments)
+  main()
   exit()

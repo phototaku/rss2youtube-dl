@@ -40,3 +40,25 @@ Mundo-HOG:
     rss: https://www.youtube.com/feeds/videos.xml?channel_id=UCq_ZoGyeCb-1nUCD9z8Fzcg
     download_dir: /media/mastertaku/ext_storage/media/House of Games
     filter: "House of Games"
+Gazebo-8O10C:
+    rss: https://www.youtube.com/feeds/videos.xml?channel_id=UCXE4voyN9idmfk6eXXDarVQ
+    download_dir: /media/mastertaku/ext_storage/media/Countdown
+    filter: "8 Out Of 10 Cats Does Countdown"
+Gazebo-HIGNFY:
+    rss: https://www.youtube.com/feeds/videos.xml?channel_id=UCXE4voyN9idmfk6eXXDarVQ
+    download_dir: /media/mastertaku/ext_storage/media/HIGNFY
+    filter: "Have I Got News For You"
+Gazebo-TLL:
+    rss: https://www.youtube.com/feeds/videos.xml?channel_id=UCXE4voyN9idmfk6eXXDarVQ
+    download_dir: /media/mastertaku/ext_storage/media/The Last Leg
+    filter: "The Last Leg"
+OVID-MTW:
+    rss: https://www.youtube.com/feeds/videos.xml?channel_id=UC_SFqM6PCAh7N3A4NkCA0cw
+    download_dir: /media/mastertaku/ext_storage/media/MTW
+    filter: "Mock the Week"
+RussellHoward:
+    rss: https://www.youtube.com/feeds/videos.xml?channel_id=UCnLxFpGiCi-u3RLx9uF8bOg
+    download_dir: /media/mastertaku/ext_storage/media/Russell Howard
+    filter: "Full Episode"
+ 
+
