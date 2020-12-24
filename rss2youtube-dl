@@ -42,7 +42,6 @@ from feed import Feed
 from seendb import SeenDB
 from problemdb import ProblemDB
 from channel import Channel
-from errors import *
 import youtube_dl
 import os
 import time
@@ -55,26 +54,21 @@ arguments = ''
 basepath = os.path.dirname(os.path.abspath(__file__))
 basename = os.path.basename(__file__)
 
-def print(*args,**kwargs):
-    try:
-        end = kwargs['end']
-    except:
-        end = '\n'
-    try:
-        err = kwargs['error']
-        sys.stderr.write(" ".join(args) + end)
-    except:
-        sys.stdout.write(" ".join(args) + end)
-
 def delete_last_line():
     CURSOR_UP_ONE = '\x1b[1A' 
     ERASE_LINE = '\x1b[2K'
     print(CURSOR_UP_ONE + ERASE_LINE,end="",flush=True)
 
+def print_line(title,msg):
+    print(f"{title}...{msg}",flush=True)
+
 class MyLogger(object):
     def __init__(self):
         global basepath
         self.logfile = os.path.join(basepath,'.error.log')
+        with open(self.logfile, 'a') as log:
+            ts = time.gmtime()
+            log.write(time.strftime("%Y-%m-%d %H:%M:%S", ts) + "\n")
 
     def debug(self, msg):
         global arguments
@@ -88,7 +82,7 @@ class MyLogger(object):
     def error(self, msg):
         try:
             with open(self.logfile, 'a') as log:
-                log.write(msg)
+                log.write(msg + "\n")
             return True
         except:
             return False
@@ -115,26 +109,12 @@ def ydl_opts(title,path):
 
 def video_list(url,title='',path=''):
     try:
-        #print("Collecting video info...",end="",flush=True)
         with youtube_dl.YoutubeDL(ydl_opts(title,path)) as ydl:
             rv = ydl.extract_info(url, False)
-    except youtube_dl.utils.DownloadError as e:
-        if "Premieres" in str(e):
-            raise ytdlPremiere
-        elif "no video" in str(e):
-            raise ytdlNoVideo
-        elif "Copyright" in str(e):
-            raise ytdlCopyright
-        elif "Unsupported URL" in str(e):
-            raise ytdlUnsupported
-        elif "Unable to extract" in str(e):
-            raise ytdlUnsupported
-        else:
-            raise
-    #print("Done.")
+    except Exception: raise
     if '_type' not in rv: 
         return {title: {'url':url,'path':path}}
-    print(f"{title}...PLAYLIST!",flush=True)
+    print_line(title,"PLAYLIST!")
     rv_list = {}
     for entry in rv['entries']:
         rv_list[entry['title']] = {'url':entry['webpage_url'],'path':f"{path}/{title}"}
@@ -145,18 +125,16 @@ def download(title,path,href):
     global the_error,percent
     try:
         urls = video_list(href,title,path)
-    except ytdlPremiere: raise
-    except ytdlNoVideo: raise
-    except ytdlCopyright: raise
-    except ytdlUnsupported: raise
-    except Exception as e: raise
+    except Exception: raise
     #print(urls)
     for video_title in urls.keys():
+        print(f"{video_title}...Downloading",end=f": {percent}",flush=True)
         try:
-            print(f"{video_title}...Downloading",end=f": {percent}",flush=True)
-            with youtube_dl.YoutubeDL(ydl_opts(video_title,urls[video_title]['path'])) as ydl:
-                ydl.download([urls[video_title]['url']]) 
-        except Exception as e: raise
+            try:
+                with youtube_dl.YoutubeDL(ydl_opts(video_title,urls[video_title]['path'])) as ydl:
+                    ydl.download([urls[video_title]['url']]) 
+            except Exception: raise
+        except Exception: raise
         print('\b' * (len(percent)+13), end="", flush=True)
         percent = '  0.0'
         print("SUCCESS!" + ' ' * 15)
@@ -182,8 +160,27 @@ def get_rss(channel):
     try:
         return soup.find("link",title="RSS").get('href')
     except:
-        print("Couldn't find an RSS link for the channel provided.",error=True)
+        print("Couldn't find an RSS link for the channel provided.")
         exit(1)
+
+def process_error(e):
+    if "Premieres" in str(e):
+        return (0,"Waiting for Premiere!")
+    elif "no video" in str(e):
+        return (2,"No video found!")
+    elif "Copyright" in str(e):
+        return (1,"Copyright Block!")
+    elif "Unsupported URL" in str(e):
+        return (3,"Unsupported site!")
+    elif "Unable to extract" in str(e):
+        return (3,"Unsupported site!")
+    elif "giving up after" in str(e):
+        return (1,"TIMEOUT!")
+    else:
+        return (1,"Unknown Error!!")
+
+def do_nothing(_href):
+    pass
 
 def main():
     try:
@@ -194,7 +191,7 @@ def main():
                 print(f"Loading custom configuration: {args['--config']}")
                 channels = Channel(args['--config']).list()
             else:
-                print("File",args['--config'],"does not exist",error=True)
+                print("File",args['--config'],"does not exist")
                 exit(1)
         else:
             print('Loading default configuration.')
@@ -234,37 +231,31 @@ def main():
                                 delete_last_line()
                                 if not decision:
                                     seen_db.add(item['href'])
-                                    print(f"{item['title']}...SKIPPING!!")
+                                    print_line(item['title'],"SKIPPING!!")
                                     continue
                             if not args['--demo']:
                                 try:
                                     if download(item['title'],channel['download_dir'],item['href']):
                                         seen_db.add(item['href'])
-                                except ytdlPremiere:
-                                    problem_db.add(item['title'],item['href'])
-                                    print('\b' * (len(percent)+13), end="", flush=True)
-                                    print(f"{item['title']}...Waiting for Premiere!")
-                                except ytdlNoVideo:
-                                    problem_db.add(item['title'],item['href'])
-                                    print('\b' * (len(percent)+13), end="", flush=True)
-                                    print(f"{item['title']}...No video found!")
-                                except ytdlCopyright:
-                                    problem_db.add(item['title'],item['href'])
-                                    print('\b' * (len(percent)+13), end="", flush=True)
-                                    print(f"{item['title']}...Copyright Block!")      
-                                except ytdlUnsupported:
-                                    seen_db.add(item['href'])
-                                    print('\b' * (len(percent)+13), end="", flush=True)
-                                    print(f"{item['title']}...Unsupported site!")
+                                except youtube_dl.utils.DownloadError as e:
+                                    action = [do_nothing,problem_db.add,problem_db.ignore,seen_db.add]
+                                    rv = process_error(e)
+                                    if rv[0] == 1:
+                                        action[rv[0]](item['title'],item['href'])
+                                    else:    
+                                        action[rv[0]](item['href'])
+                                    print_line(item['title'],rv[1])
                                 except Exception as e:
-                                    print(str(e),error=True)
+                                    print(item['title'],"\n",str(e))
                                     exit(1)
                             else:
-                                print(f"{item['title']}...DEMO!")
+                                print_line(item['title'],"DEMO!")
                         else:
-                            print(f"{item['title']}...SEEN!")
+                            print_line(item['title'],"SEEN!")
             else:
                 print("Failed.")
+                print("Program terminating...")
+                exit(1)
         if len(problem_db):
             print("\nThere were problems with the following links:") 
             if not args['--cron']:

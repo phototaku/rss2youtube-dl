@@ -59,6 +59,8 @@ OVID-MTW:
 RussellHoward:
     rss: https://www.youtube.com/feeds/videos.xml?channel_id=UCnLxFpGiCi-u3RLx9uF8bOg
     download_dir: /media/mastertaku/ext_storage/media/Russell Howard
-    filter: "Full Episode"
+    filter: 
+        - "Full Episode"
+        - "Full Compilation Episode"
  
 
