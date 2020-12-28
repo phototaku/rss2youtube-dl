@@ -30,7 +30,7 @@ class ProblemDB:
             with open(self.ignore_db_path, 'a') as database:
                 database.write(href)
             return True
-        except Exception as e:
+        except Exception as _e:
             raise
 
     def ignore(self,title:str) -> bool:
@@ -39,7 +39,7 @@ class ProblemDB:
                 self.db.pop(self.db.index(title))
                 self.db_links.pop(title)
             return True
-        except Exception as e:
+        except Exception as _e:
             raise
 
     def is_ignored(self,item: str) -> bool:
