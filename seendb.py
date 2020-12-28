@@ -1,7 +1,9 @@
 from pathlib import Path
+import os
 
 class SeenDB:
     def __init__(self):
+        os.chdir(os.path.dirname(os.path.realpath(__file__)))
         self.db = '.seen.db'
         Path(self.db).touch()
 

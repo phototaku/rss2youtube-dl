@@ -6,7 +6,7 @@ v.1.0
 2020 by antiSOFT
 
 Usage:
-  rss2youtube-dl [-dCDi] [-c CONFIGFILE] [-r CHANNEL]
+  rss2youtube-dl [-CDHvdhi] [-c CONFIGFILE] [-r CHANNEL]
   rss2youtube-dl --help
   rss2youtube-dl --version
 
@@ -14,6 +14,7 @@ Options:
   -c --config CONFIGFILE                Use custom configuration file             
   -i --interactive                      Interactive mode
   -d --demo                             Don't save or add to seen
+  -H --hide-seen                        Hide seen messages.
   -C --cron                             Script being run by cron, don't be interactive.
   -D --debug                            Print debug info to screen.
   -r --rss-from-channel CHANNEL         Get rss url for youtube channel url provided
@@ -182,28 +183,44 @@ def process_error(e):
 def do_nothing(_href):
     pass
 
+def yn_prompt(prompt):
+    while True:
+        try:
+            answer = input(f"{prompt} (y/[n]) ")
+            if answer[0] == 'y' or answer[0] == 'n':
+                if answer[0] == 'y':
+                    return True
+                else:
+                    return False                    
+            else:
+                raise ValueError
+        except ValueError:
+            print('You must enter y or n.')
+        except IndexError:
+            return False
+
 def main():
     try:
         global percent, the_error,arguments
         args = arguments
         if args['--config']:
             if os.path.isfile(args['--config']):
-                print(f"Loading custom configuration: {args['--config']}")
+                if args['--debug']: print(f"Loading custom configuration: {args['--config']}")
                 channels = Channel(args['--config']).list()
             else:
                 print("File",args['--config'],"does not exist")
                 exit(1)
         else:
-            print('Loading default configuration.')
+            if args['--debug']: print('Loading default configuration.')
             channels = Channel().list()
         seen_db = SeenDB()
         problem_db = ProblemDB()
         for channel in channels:
             #print(channel)
-            print("Downloading feed list...",end="",flush=True)
+            if args['--debug']: print("Downloading feed list...",end="",flush=True)
             video_list = Feed(channel['rss']).download()
             if video_list:
-                print("Done.")
+                if args['--debug']: print("Done.")
                 for item in video_list:
                     if args['--interactive']:
                         bypass_filter = True
@@ -212,22 +229,7 @@ def main():
                     if ('filter' in channel.keys() and in_filter(channel['filter'],item['title'])) or ('filter' not in channel.keys()) or bypass_filter:
                         if not seen_db.exists(item['href']) and not problem_db.is_ignored(item['href']):
                             if args['--interactive']:
-                                decision = None
-                                while decision == None:
-                                    try:
-                                        answer = input(f"Download {item['title']}? (y/[n]) ")
-                                        if answer[0] == 'y' or answer[0] == 'n' or len(answer) == 0:
-                                            if answer[0] == 'y':
-                                                decision = True
-                                            else:
-                                                decision = False                    
-                                        else:
-                                            raise ValueError
-                                    except ValueError:
-                                        #exit(1)
-                                        print('You must enter y or n.')
-                                    except IndexError:
-                                        decision = False
+                                decision = yn_prompt(f"Download {item['title']}?")
                                 delete_last_line()
                                 if not decision:
                                     seen_db.add(item['href'])
@@ -238,7 +240,7 @@ def main():
                                     if download(item['title'],channel['download_dir'],item['href']):
                                         seen_db.add(item['href'])
                                 except youtube_dl.utils.DownloadError as e:
-                                    action = [do_nothing,problem_db.add,problem_db.ignore,seen_db.add]
+                                    action = [do_nothing,problem_db.add,problem_db.ignore_write,seen_db.add]
                                     rv = process_error(e)
                                     if rv[0] == 1:
                                         action[rv[0]](item['title'],item['href'])
@@ -251,7 +253,8 @@ def main():
                             else:
                                 print_line(item['title'],"DEMO!")
                         else:
-                            print_line(item['title'],"SEEN!")
+                            if not args['--hide-seen']:
+                                print_line(item['title'],"SEEN!")
             else:
                 print("Failed.")
                 print("Program terminating...")
@@ -260,18 +263,9 @@ def main():
             print("\nThere were problems with the following links:") 
             if not args['--cron']:
                 for problem in problem_db:
-                    while True:
-                        try:
-                            answer = input(f"{problem}: Ignore? (y/[n]) ")
-                            if len(answer) == 0: break
-                            if answer[0].lower() != 'y' and answer[0].lower() != 'n' and len(answer) != 0:
-                                raise ValueError
-                            else:
-                                if answer[0].lower() == 'y':
-                                    problem_db.ignore(problem)
-                                break
-                        except ValueError:
-                            print("Enter yes or no....")
+                    ignore = yn_prompt(f"{problem}: Ignore?")
+                    if ignore:
+                        problem_db.ignore(problem)
             else:
                 print(problem_db)
         exit()

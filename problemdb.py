@@ -1,7 +1,9 @@
 from pathlib import Path
+import os
 
 class ProblemDB:
     def __init__(self):
+        os.chdir(os.path.dirname(os.path.realpath(__file__)))
         self.ignore_db_path = '.ignore.db'
         Path(self.ignore_db_path).touch()
         self.db = []
@@ -22,16 +24,23 @@ class ProblemDB:
         self.db.append(title)
         self.db_links[title] = f"{item}\n"
         return True
-    
-    def ignore(self,title:str) -> bool:
+
+    def ignore_write(self,href:str):
         try:
             with open(self.ignore_db_path, 'a') as database:
+                database.write(href)
+            return True
+        except Exception as e:
+            raise
+
+    def ignore(self,title:str) -> bool:
+        try:
+            if self.ignore_write(self.db_links[title]):
                 self.db.pop(self.db.index(title))
-                database.write(self.db_links[title])
                 self.db_links.pop(title)
             return True
-        except:
-            return False
+        except Exception as e:
+            raise
 
     def is_ignored(self,item: str) -> bool:
         if item + "\n" in self.ignore_db:

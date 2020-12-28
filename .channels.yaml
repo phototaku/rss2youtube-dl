@@ -62,5 +62,9 @@ RussellHoward:
     filter: 
         - "Full Episode"
         - "Full Compilation Episode"
- 
-
+Python:
+    rss: https://rss.outsider.press/public.php?op=rss&id=-1468&key=ejq9f75fe7d1208f096
+    download_dir: /media/mastertaku/ext_storage/media/Computer Videos/Python
+Nashville:
+    rss: https://rss.outsider.press/public.php?op=rss&id=-1469&key=6563zy5fe8c333ce988
+    download_dir: /media/mastertaku/ext_storage/media/Nashville
