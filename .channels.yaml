@@ -88,3 +88,7 @@ COVID:
     name: COVID Videos
     rss: https://rss.outsider.press/public.php?op=rss&id=-1480&key=g8kvmw5ff23f6f75123
     download_dir: /home/mastertaku/Documents/American Outsider/Coronavirus/
+Cherzo:
+    name: Portrait Artist of the Year
+    rss: https://www.youtube.com/feeds/videos.xml?channel_id=UCgF73ULuA5lCMEys6SgI8Wg
+    download_dir: /media/mastertaku/ext_storage/media/Portrait Artist of the Year

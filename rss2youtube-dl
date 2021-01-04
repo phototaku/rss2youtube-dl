@@ -61,9 +61,6 @@ def delete_last_line():
     ERASE_LINE = '\x1b[2K'
     print(CURSOR_UP_ONE + ERASE_LINE,end="",flush=True)
 
-def print_line(title,msg):
-    print(f"{title}...{msg}",flush=True)
-
 class MyLogger(object):
     def __init__(self):
         global basepath
@@ -90,8 +87,8 @@ class MyLogger(object):
             return False
 
 def ydl_hook(d):
-    global percent
-    if '_percent_str' not in d: return
+    global percent, arguments
+    if '_percent_str' not in d or arguments['--debug']: return
     print('\b' * len(percent), end="", flush=True)
     percent = d['_percent_str']
     print(percent,end='',flush=True)
@@ -116,7 +113,7 @@ def video_list(url,title='',path=''):
     except Exception: raise
     if '_type' not in rv: 
         return {title: {'url':url,'path':path}}
-    print_line(title,"PLAYLIST!")
+    print(f"{title}...PLAYLIST!",flush=True)
     rv_list = {}
     for entry in rv['entries']:
         rv_list[entry['title']] = {'url':entry['webpage_url'],'path':f"{path}/{title}"}
@@ -124,22 +121,23 @@ def video_list(url,title='',path=''):
     return rv_list
 
 def download(title,path,href): 
-    global the_error,percent
+    global the_error,percent,arguments
     try:
         urls = video_list(href,title,path)
     except Exception: raise
     #print(urls)
     for video_title in urls.keys():
-        print(f"{video_title}...Downloading",end=f": {percent}",flush=True)
+        print(f"{video_title}...Downloading",end=f": {(percent if not arguments['--debug'] else '')}",flush=True)
         try:
             try:
                 with youtube_dl.YoutubeDL(ydl_opts(video_title,urls[video_title]['path'])) as ydl:
                     ydl.download([urls[video_title]['url']]) 
             except Exception: raise
         except Exception: raise
-        print('\b' * (len(percent)+13), end="", flush=True)
-        percent = '  0.0'
-        print("SUCCESS!" + ' ' * 15)
+        if not arguments['--debug']:
+            print('\b' * (len(percent)+13), end="", flush=True)
+            percent = '  0.0'
+            print("SUCCESS!" + ' ' * 15)
     return True
 
 def in_filter(filter,title):
@@ -245,7 +243,7 @@ def main():
                                 delete_last_line()
                                 if not decision:
                                     seen_db.add(item['href'])
-                                    print_line(item['title'],"SKIPPING!!")
+                                    print(f"{item['title']}...SKIPPING!!",flush=True)
                                     continue
                             if not args['--demo']:
                                 try:
@@ -258,15 +256,15 @@ def main():
                                         action[rv[0]](item['title'],item['href'])
                                     else:    
                                         action[rv[0]](item['href'])
-                                    print_line(item['title'],rv[1])
+                                    print(f"{item['title']}...{rv[1]}",flush=True)
                                 except Exception as e:
                                     print(item['title'],"\n",str(e))
                                     exit(1)
                             else:
-                                print_line(item['title'],"DEMO!")
+                                print(f"{item['title']}...DEMO!",flush=True)
                         else:
                             if not args['--hide-seen']:
-                                print_line(item['title'],"SEEN!")
+                                print(f"{item['title']}...SEEN!",flush=True)
             else:
                 print("Failed.")
                 print("Program terminating...")
