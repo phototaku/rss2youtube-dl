@@ -1,17 +1,22 @@
 outsider_press-momfeed:
+    name: Mom Feed
     download_dir: /media/mastertaku/ext_storage/media/mom
     rss: https://rss.outsider.press/public.php?op=rss&id=2809&key=vyil9q5e84f8ced4573
 outsider_press-interesting:
+    name: Interesteing Videos
     rss: https://rss.outsider.press/public.php?op=rss&id=-1460&key=xexmt25ec46090f2c8c
     download_dir: /media/mastertaku/ext_storage/media/interesting-videos
 mylist:
+    name: My Downloads
     rss: https://rss.outsider.press/public.php?op=rss&id=-1467&key=ejvjwe5faf8c0d2a053
     download_dir: /media/mastertaku/ext_storage/media/MY_DOWNLOADS
 spitting-image:
+    name: Spitting Image
     rss: https://www.youtube.com/feeds/videos.xml?channel_id=UCCov3Uxwgh6Fq_2F7oW9-hA
     download_dir: /media/mastertaku/ext_storage/media/SpittingImage
     filter: "Full Episode"
 ShowMustGoOn:
+    name: The Show Must Go On
     rss: https://www.youtube.com/feeds/videos.xml?channel_id=UCdmPjhKMaXNNeCr1FjuMvag
     download_dir: /media/mastertaku/ext_storage/media/Live Plays
     filter: 
@@ -19,52 +24,72 @@ ShowMustGoOn:
         - "FULL SHOW"
         - "FULL STAGE PLAY"
 QI-XL:
+    name: QI
     rss: https://www.youtube.com/feeds/videos.xml?channel_id=UCNWdtlXduDBmKq3QHqlEg-g
     download_dir: /media/mastertaku/ext_storage/media/QI
     filter: "QI XL"
 NationalTheater:
+    name: The National Theater
     rss: https://www.youtube.com/feeds/videos.xml?channel_id=UCUDq1XzCY0NIOYVJvEMQjqw
     download_dir: /media/mastertaku/ext_storage/media/Live Plays
     filter: "Full Performance"
 StratfordFestival:
+    name: The Stratford Festival
     rss: https://www.youtube.com/feeds/videos.xml?channel_id=UC_1Ricuv8kk5oUwJn4K4r7Q
     download_dir: /media/mastertaku/ext_storage/media/Live Plays
     filter: "LIVE VIEWING PARTY"
 ShakespearsGlobe:
+    name: Shakespeares Globe Theater
     rss: https://www.youtube.com/feeds/videos.xml?channel_id=UCwN-jwNNNQN-8sfKG-qg8uA
     download_dir: /media/mastertaku/ext_storage/media/Live Plays
     filter: 
         - "Globe Advent"
         - "for Free"
 Mundo-HOG:
+    name: House of Games
     rss: https://www.youtube.com/feeds/videos.xml?channel_id=UCq_ZoGyeCb-1nUCD9z8Fzcg
     download_dir: /media/mastertaku/ext_storage/media/House of Games
     filter: "House of Games"
 Gazebo-8O10C:
+    name: 8 Out of 10 Cats
     rss: https://www.youtube.com/feeds/videos.xml?channel_id=UCXE4voyN9idmfk6eXXDarVQ
     download_dir: /media/mastertaku/ext_storage/media/Countdown
     filter: "8 Out Of 10 Cats Does Countdown"
 Gazebo-HIGNFY:
+    name: Have I Got News For You
     rss: https://www.youtube.com/feeds/videos.xml?channel_id=UCXE4voyN9idmfk6eXXDarVQ
     download_dir: /media/mastertaku/ext_storage/media/HIGNFY
     filter: "Have I Got News For You"
 Gazebo-TLL:
+    name: The Last Leg
     rss: https://www.youtube.com/feeds/videos.xml?channel_id=UCXE4voyN9idmfk6eXXDarVQ
     download_dir: /media/mastertaku/ext_storage/media/The Last Leg
     filter: "The Last Leg"
 OVID-MTW:
+    name: Mock the Week
     rss: https://www.youtube.com/feeds/videos.xml?channel_id=UC_SFqM6PCAh7N3A4NkCA0cw
     download_dir: /media/mastertaku/ext_storage/media/MTW
     filter: "Mock the Week"
 RussellHoward:
+    name: Russell Howard
     rss: https://www.youtube.com/feeds/videos.xml?channel_id=UCnLxFpGiCi-u3RLx9uF8bOg
     download_dir: /media/mastertaku/ext_storage/media/Russell Howard
     filter: 
         - "Full Episode"
         - "Full Compilation Episode"
 Python:
+    name: Python Videos
     rss: https://rss.outsider.press/public.php?op=rss&id=-1468&key=ejq9f75fe7d1208f096
     download_dir: /media/mastertaku/ext_storage/media/Computer Videos/Python
 Nashville:
+    name: Nashville Bombing
     rss: https://rss.outsider.press/public.php?op=rss&id=-1469&key=6563zy5fe8c333ce988
     download_dir: /media/mastertaku/ext_storage/media/Nashville
+Trump:
+    name: "[American Outsider] Trump"
+    rss: https://rss.outsider.press/public.php?op=rss&id=-1481&key=qttxek5ff23f2632d9e
+    download_dir: /home/mastertaku/Documents/American Outsider/Trump/
+COVID:
+    name: COVID Videos
+    rss: https://rss.outsider.press/public.php?op=rss&id=-1480&key=g8kvmw5ff23f6f75123
+    download_dir: /home/mastertaku/Documents/American Outsider/Coronavirus/

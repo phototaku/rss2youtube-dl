@@ -36,6 +36,7 @@ Options:
 # [X] interactive mode that bypasses filters and asks on each unseen video if you want to DL it.
 # [X] get RSS from channel url
 # [ ] Refactor the code to get rid of the deep if/then
+# [X] Notify end user of which channel script is scanning, add name: to .channels.yaml
 #
 
 from docopt import docopt
@@ -216,8 +217,7 @@ def main():
         seen_db = SeenDB()
         problem_db = ProblemDB()
         for channel in channels:
-            #print(channel)
-            if args['--debug']: print("Downloading feed list...",end="",flush=True)
+            if args['--debug']: print("Downloading", channel['name'], "feed list...",end="",flush=True)
             video_list = Feed(channel['rss']).download()
             if video_list:
                 if args['--debug']: print("Done.")
