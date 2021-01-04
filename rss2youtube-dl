@@ -27,7 +27,7 @@ Options:
 # TODO:
 #
 # [X] handle multiple filters
-# [ ] handle filter to directory that overrides a default
+# [X] handle filter to directory that overrides a default
 # [X] add progress
 # [X] problem_db and ignore_db
 # [X] make problem_db prompt more human readable
@@ -35,8 +35,8 @@ Options:
 # [X] playlist downloads to folder
 # [X] interactive mode that bypasses filters and asks on each unseen video if you want to DL it.
 # [X] get RSS from channel url
-# [ ] Refactor the code to get rid of the deep if/then
 # [X] Notify end user of which channel script is scanning, add name: to .channels.yaml
+# [ ] Refactor the code to get rid of the deep if/then
 #
 
 from docopt import docopt
@@ -147,6 +147,9 @@ def in_filter(filter,title):
         filter = [filter]
     for pattern in filter:
         #print(pattern,"->",title)
+        if isinstance(pattern,dict):
+            for key,_value in pattern.items():
+                pattern = key
         if re.search(pattern,title):
             return True
         else:
@@ -227,6 +230,15 @@ def main():
                     else:
                         bypass_filter = False
                     if ('filter' in channel.keys() and in_filter(channel['filter'],item['title'])) or ('filter' not in channel.keys()) or bypass_filter:
+                        if 'filter' in channel.keys():
+                            for ptrn in channel['filter']:
+                                if isinstance(ptrn,dict):
+                                    for _pattern,subconfig in ptrn.items():
+                                        download_dir = subconfig['download_dir']      
+                                else:
+                                    download_dir = channel['download_dir']
+                        else:
+                            download_dir = channel['download_dir']
                         if not seen_db.exists(item['href']) and not problem_db.is_ignored(item['href']):
                             if args['--interactive']:
                                 decision = yn_prompt(f"Download {item['title']}?")
@@ -237,7 +249,7 @@ def main():
                                     continue
                             if not args['--demo']:
                                 try:
-                                    if download(item['title'],channel['download_dir'],item['href']):
+                                    if download(item['title'],download_dir,item['href']):
                                         seen_db.add(item['href'])
                                 except youtube_dl.utils.DownloadError as e:
                                     action = [do_nothing,problem_db.add,problem_db.ignore_write,seen_db.add]

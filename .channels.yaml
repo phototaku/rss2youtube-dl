@@ -51,20 +51,15 @@ Mundo-HOG:
     download_dir: /media/mastertaku/ext_storage/media/House of Games
     filter: "House of Games"
 Gazebo-8O10C:
-    name: 8 Out of 10 Cats
+    name: Gazebo [8OO10C,HIGNFY,TLL]
     rss: https://www.youtube.com/feeds/videos.xml?channel_id=UCXE4voyN9idmfk6eXXDarVQ
-    download_dir: /media/mastertaku/ext_storage/media/Countdown
-    filter: "8 Out Of 10 Cats Does Countdown"
-Gazebo-HIGNFY:
-    name: Have I Got News For You
-    rss: https://www.youtube.com/feeds/videos.xml?channel_id=UCXE4voyN9idmfk6eXXDarVQ
-    download_dir: /media/mastertaku/ext_storage/media/HIGNFY
-    filter: "Have I Got News For You"
-Gazebo-TLL:
-    name: The Last Leg
-    rss: https://www.youtube.com/feeds/videos.xml?channel_id=UCXE4voyN9idmfk6eXXDarVQ
-    download_dir: /media/mastertaku/ext_storage/media/The Last Leg
-    filter: "The Last Leg"
+    filter: 
+        - "8 Out Of 10 Cats Does Countdown":
+            download_dir: /media/mastertaku/ext_storage/media/Countdown
+        - "Have I Got News For You":
+            download_dir: /media/mastertaku/ext_storage/media/HIGNFY
+        - "The Last Leg":
+            download_dir: /media/mastertaku/ext_storage/media/The Last Leg
 OVID-MTW:
     name: Mock the Week
     rss: https://www.youtube.com/feeds/videos.xml?channel_id=UC_SFqM6PCAh7N3A4NkCA0cw
