@@ -2,7 +2,7 @@
 """
 rss2youtube-dl
 Desc: A utility that downloads and parses rss feeds for videos to download with youtube-dl
-v.1.0
+v.1.0.3
 2020 by antiSOFT
 
 Usage:
@@ -19,6 +19,7 @@ Options:
   -D --debug                            Print debug info to screen.
   -r --rss-from-channel CHANNEL         Get rss url for youtube channel url provided
   -h --help                             Show this screen
+  -v --verbose                          Verbose
   --version                             Show version info
 
 """
@@ -36,6 +37,7 @@ Options:
 # [X] interactive mode that bypasses filters and asks on each unseen video if you want to DL it.
 # [X] get RSS from channel url
 # [X] Notify end user of which channel script is scanning, add name: to .channels.yaml
+# [X] Add verbose
 # [ ] Refactor the code to get rid of the deep if/then
 #
 
@@ -94,8 +96,9 @@ def ydl_hook(d):
     print(percent,end='',flush=True)
 
 def ydl_opts(title,path):
+    outtmpl = os.path.join(path,title)
     ydlopts = {
-        "outtmpl": f"{path}/{title}.%(ext)s",
+        "outtmpl": f"{outtmpl}.%(ext)s",
         "format": "best",
         "quiet": True,
         "retries": 3,
@@ -207,21 +210,21 @@ def main():
         args = arguments
         if args['--config']:
             if os.path.isfile(args['--config']):
-                if args['--debug']: print(f"Loading custom configuration: {args['--config']}")
+                if args['--debug'] or args['--verbose']: print(f"Loading custom configuration: {args['--config']}")
                 channels = Channel(args['--config']).list()
             else:
                 print("File",args['--config'],"does not exist")
                 exit(1)
         else:
-            if args['--debug']: print('Loading default configuration.')
+            if args['--debug'] or args['--verbose']: print('Loading default configuration.')
             channels = Channel().list()
         seen_db = SeenDB()
         problem_db = ProblemDB()
         for channel in channels:
-            if args['--debug']: print("Downloading", channel['name'], "feed list...",end="",flush=True)
+            if args['--debug'] or args['--verbose']: print("Downloading", channel['name'], "feed list...",end="",flush=True)
             video_list = Feed(channel['rss']).download()
             if video_list:
-                if args['--debug']: print("Done.")
+                if args['--debug'] or args['--verbose']: print("Done.")
                 for item in video_list:
                     if args['--interactive']:
                         bypass_filter = True
@@ -284,7 +287,7 @@ def main():
         exit(0)
 
 if __name__ == "__main__":
-  arguments = docopt(__doc__, version='rss2youtube-dl v.1.0')
+  arguments = docopt(__doc__, version='rss2youtube-dl v.1.0.3')
   #print(arguments)
   #exit()
   if arguments['--rss-from-channel']:
