@@ -2,9 +2,11 @@ from pathlib import Path
 import os
 
 class SeenDB:
-    def __init__(self):
-        os.chdir(os.path.dirname(os.path.realpath(__file__)))
-        self.db = '.seen.db'
+    def __init__(self,**kwargs):
+        try:
+            self.db = os.path.join(kwargs['base'],'.seen',f".{kwargs['channel']}.seen.db")
+        except:
+            raise Exception
         Path(self.db).touch()
 
     def add(self,item:str) -> bool:

@@ -6,6 +6,15 @@ outsider_press-interesting:
     name: Interesteing Videos
     rss: https://rss.outsider.press/public.php?op=rss&id=-1460&key=xexmt25ec46090f2c8c
     download_dir: /media/mastertaku/ext_storage/media/interesting-videos
+outsider_press-music:
+    name: Music
+    rss: https://rss.outsider.press/public.php?op=rss&id=-1414&key=fzj7rs5ff5448dd6fb8
+    download_dir: /home/mastertaku/Music
+    music: true
+outsider_press-video:
+    name: Videos
+    rss: https://rss.outsider.press/public.php?op=rss&id=-1413&key=jb7ymx5fe7d0fe6ae00
+    download_dir: /home/mastertaku/Videos
 mylist:
     name: My Downloads
     rss: https://rss.outsider.press/public.php?op=rss&id=-1467&key=ejvjwe5faf8c0d2a053
@@ -51,7 +60,7 @@ Mundo-HOG:
     download_dir: /media/mastertaku/ext_storage/media/House of Games
     filter: "House of Games"
 Gazebo-8O10C:
-    name: Gazebo [8OO10C,HIGNFY,TLL]
+    name: Gazebo [8OO10C,HIGNFY,TLL,BFQOTY]
     rss: https://www.youtube.com/feeds/videos.xml?channel_id=UCXE4voyN9idmfk6eXXDarVQ
     filter: 
         - "8 Out Of 10 Cats Does Countdown":
@@ -60,6 +69,10 @@ Gazebo-8O10C:
             download_dir: /media/mastertaku/ext_storage/media/HIGNFY
         - "The Last Leg":
             download_dir: /media/mastertaku/ext_storage/media/The Last Leg
+        - "Big Fat Quiz":
+            download_dir: /media/mastertaku/ext_storage/media/Big Fat Quiz
+        - "Would I Lie to You":
+            download_dir: /media/mastertaku/ext_storage/media/WILTY
 OVID-MTW:
     name: Mock the Week
     rss: https://www.youtube.com/feeds/videos.xml?channel_id=UC_SFqM6PCAh7N3A4NkCA0cw
@@ -85,7 +98,7 @@ Trump:
     rss: https://rss.outsider.press/public.php?op=rss&id=-1481&key=qttxek5ff23f2632d9e
     download_dir: /home/mastertaku/Documents/American Outsider/Trump
 COVID:
-    name: COVID Videos
+    name: "[American Outsider] COVID Videos"
     rss: https://rss.outsider.press/public.php?op=rss&id=-1480&key=g8kvmw5ff23f6f75123
     download_dir: /home/mastertaku/Documents/American Outsider/Coronavirus
 Cherzo:
@@ -96,3 +109,7 @@ Cherzo:
             download_dir: /media/mastertaku/ext_storage/media/Portrait Artist of the Year
         - Meet the Richardsons:
             download_dir: /media/mastertaku/ext_storage/media/Meet the Richardsons
+TrumpRiots:
+    name: Trump Riots
+    rss: https://rss.outsider.press/public.php?op=rss&id=-1483&key=gwx89r5ff65644b361e
+    download_dir: /home/mastertaku/Documents/American Outsider/Trump/SeditionRiots

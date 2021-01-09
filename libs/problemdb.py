@@ -2,9 +2,11 @@ from pathlib import Path
 import os
 
 class ProblemDB:
-    def __init__(self):
-        os.chdir(os.path.dirname(os.path.realpath(__file__)))
-        self.ignore_db_path = '.ignore.db'
+    def __init__(self,**kwargs):
+        try:
+            self.ignore_db_path = os.path.join(kwargs['base'],".ignore.db")
+        except:
+            raise Exception
         Path(self.ignore_db_path).touch()
         self.db = []
         self.db_links = {}

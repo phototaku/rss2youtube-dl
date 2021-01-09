@@ -2,13 +2,23 @@ import yaml
 from pathlib import Path
 import os
 
+class LoadFailure(Exception):
+    def __init__(self,message="Load failure!"):
+        self.message = message
+        super().__init__(self.message)
+    
+    def __str__(self):
+        return f'{self.message}\n  SYNTAX: {self.syntax}\n'
+
 class Channel:
-    def __init__(self,*args):
-        if args:
-            config_file = args[0]
-        else:
-            os.chdir(os.path.dirname(os.path.realpath(__file__)))
-            config_file = '.channels.yaml'
+    def __init__(self,**kwargs):
+        try:
+            config_file = kwargs['config']
+        except KeyError:
+            try:
+                config_file = os.path.join(kwargs['base'],".channels.yaml")
+            except KeyError:
+                raise LoadFailure
         Path(config_file).touch()
         with open(config_file,'r') as file:
             self.config = yaml.full_load(file)

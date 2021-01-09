@@ -38,15 +38,14 @@ Options:
 # [X] get RSS from channel url
 # [X] Notify end user of which channel script is scanning, add name: to .channels.yaml
 # [X] Add verbose
+# [X] Add mp3 capability
 # [ ] Refactor the code to get rid of the deep if/then
 #
 
 from docopt import docopt
-from feed import Feed
-from seendb import SeenDB
-from problemdb import ProblemDB
-from channel import Channel
+from libs import *
 import youtube_dl
+import pdfkit
 import os
 import time
 import sys
@@ -58,24 +57,25 @@ arguments = ''
 basepath = os.path.dirname(os.path.abspath(__file__))
 basename = os.path.basename(__file__)
 
+def print(text):
+    sys.stdout.write(text)
+    sys.stdout.flush()
+
 def delete_last_line():
     CURSOR_UP_ONE = '\x1b[1A' 
     ERASE_LINE = '\x1b[2K'
-    print(CURSOR_UP_ONE + ERASE_LINE,end="",flush=True)
+    print(CURSOR_UP_ONE + ERASE_LINE)
 
 class MyLogger(object):
     def __init__(self):
         global basepath
         self.logfile = os.path.join(basepath,'.error.log')
-        with open(self.logfile, 'a') as log:
-            ts = time.gmtime()
-            log.write(time.strftime("%Y-%m-%d %H:%M:%S", ts) + "\n")
+            
 
     def debug(self, msg):
         global arguments
         if arguments['--debug']:
-
-            print(msg)
+            print(msg + '\n')
 
     def warning(self, msg):
         pass
@@ -83,6 +83,8 @@ class MyLogger(object):
     def error(self, msg):
         try:
             with open(self.logfile, 'a') as log:
+                ts = time.gmtime()
+                log.write(time.strftime("%Y-%m-%d %H:%M:%S", ts) + "\n")
                 log.write(msg + "\n")
             return True
         except:
@@ -91,63 +93,79 @@ class MyLogger(object):
 def ydl_hook(d):
     global percent, arguments
     if '_percent_str' not in d or arguments['--debug']: return
-    print('\b' * len(percent), end="", flush=True)
+    print('\b' * len(percent))
     percent = d['_percent_str']
-    print(percent,end='',flush=True)
+    print(percent)
 
-def ydl_opts(title,path):
-    outtmpl = os.path.join(path,title)
-    ydlopts = {
-        "outtmpl": f"{outtmpl}.%(ext)s",
-        "format": "best",
-        "quiet": True,
-        "retries": 3,
-        "nooverwrites": True,
-        "continued": True,
-        'logger': MyLogger(),
-        "progress_hooks":[ydl_hook],
+def ydl_opts(title,path,music):
+    outtmpl = f"{os.path.join(path,title)}.%(ext)s"
+    if not music:
+        ydlopts = {
+            "outtmpl": outtmpl,
+            "format": "best",
+            "quiet": True,
+            "retries": 3,
+            "nooverwrites": True,
+            "continued": True,
+            'logger': MyLogger(),
+            "progress_hooks":[ydl_hook],
+            }
+    else:
+        ydlopts = {
+            'format': 'bestaudio/best',
+            'outtmpl': outtmpl,
+            'postprocessors': [
+                {'key': 'FFmpegExtractAudio','preferredcodec': 'mp3',
+                'preferredquality': '192',
+                },
+                {'key': 'FFmpegMetadata'},
+            ],
+            "quiet": True,
+            "retries": 3,
+            "nooverwrites": True,
+            "continued": True,
+            'logger': MyLogger(),
+            "progress_hooks":[ydl_hook],
         }
     return ydlopts
 
 def video_list(url,title='',path=''):
     try:
-        with youtube_dl.YoutubeDL(ydl_opts(title,path)) as ydl:
+        with youtube_dl.YoutubeDL(ydl_opts(title,path,False)) as ydl:
             rv = ydl.extract_info(url, False)
     except Exception: raise
     if '_type' not in rv: 
         return {title: {'url':url,'path':path}}
-    print(f"{title}...PLAYLIST!",flush=True)
+    print(f"{title}...PLAYLIST!\n")
     rv_list = {}
     for entry in rv['entries']:
         rv_list[entry['title']] = {'url':entry['webpage_url'],'path':f"{path}/{title}"}
-        print(f"{entry['title']} added.",flush=True)
+        print(f"{entry['title']} added.\n")
     return rv_list
 
-def download(title,path,href): 
+def download(title,path,href,music=False): 
     global the_error,percent,arguments
     try:
         urls = video_list(href,title,path)
     except Exception: raise
-    #print(urls)
     for video_title in urls.keys():
-        print(f"{video_title}...Downloading",end=f": {(percent if not arguments['--debug'] else '')}",flush=True)
+        print(f"{video_title}...Downloading: {(percent if not arguments['--debug'] else '')}")
         try:
             try:
-                with youtube_dl.YoutubeDL(ydl_opts(video_title,urls[video_title]['path'])) as ydl:
+                with youtube_dl.YoutubeDL(ydl_opts(video_title,urls[video_title]['path'],music)) as ydl:
                     ydl.download([urls[video_title]['url']]) 
             except Exception: raise
         except Exception: raise
         if not arguments['--debug']:
-            print('\b' * (len(percent)+13), end="", flush=True)
+            print('\b' * (len(percent)+13))
             percent = '  0.0'
-            print("SUCCESS!" + ' ' * 15)
+            print("SUCCESS!" + ' ' * 15 + '\n')
     return True
 
 def in_filter(filter,title):
     if not isinstance(filter,list):
         filter = [filter]
     for pattern in filter:
-        #print(pattern,"->",title)
         if isinstance(pattern,dict):
             for key,_value in pattern.items():
                 pattern = key
@@ -155,7 +173,6 @@ def in_filter(filter,title):
             return True
         else:
             continue
-    #print("false")
     return False
 
 def get_rss(channel):
@@ -166,7 +183,7 @@ def get_rss(channel):
     try:
         return soup.find("link",title="RSS").get('href')
     except:
-        print("Couldn't find an RSS link for the channel provided.")
+        print("Couldn't find an RSS link for the channel provided.\n")
         exit(1)
 
 def process_error(e):
@@ -182,8 +199,12 @@ def process_error(e):
         return (3,"Unsupported site!")
     elif "giving up after" in str(e):
         return (1,"TIMEOUT!")
+    elif "not available" in str(e):
+        return (1,"Video not available.")
+    elif "in your country" in str(e):
+        return (1,"Region locked!!")
     else:
-        return (1,"Unknown Error!!")
+        return (1,f"Unknown Error!!\n{str(e)}")
 
 def do_nothing(_href):
     pass
@@ -200,34 +221,48 @@ def yn_prompt(prompt):
             else:
                 raise ValueError
         except ValueError:
-            print('You must enter y or n.')
+            print('You must enter y or n.\n')
         except IndexError:
             return False
 
+def download_article(url,download_dir):
+    try:
+        pdfkit.from_url(str(url), download_dir)
+        return True
+    except:
+        raise
+
 def main():
     try:
-        global percent, the_error,arguments
+        global percent, the_error,arguments,basepath
         args = arguments
         if args['--config']:
-            if os.path.isfile(args['--config']):
-                if args['--debug'] or args['--verbose']: print(f"Loading custom configuration: {args['--config']}")
-                channels = Channel(args['--config']).list()
+            if os.path.isfile(os.path.abspath(args['--config'])):
+                if args['--debug'] or args['--verbose']: print(f"Loading custom configuration: {args['--config']}\n")
+                try:
+                    channels = Channel(config=os.path.abspath(args['--config'])).list()
+                except LoadFailure:
+                    raise
             else:
-                print("File",args['--config'],"does not exist")
+                print(f"File {args['--config']} does not exist.\n")
                 exit(1)
         else:
-            if args['--debug'] or args['--verbose']: print('Loading default configuration.')
-            channels = Channel().list()
-        seen_db = SeenDB()
-        problem_db = ProblemDB()
+            if args['--debug'] or args['--verbose']: print('Loading default configuration.\n')
+            try:
+                channels = Channel(base=basepath).list()
+            except LoadFailure:
+                raise
+        
+        problem_db = ProblemDB(base=basepath)
         for channel in channels:
-            if args['--debug'] or args['--verbose']: print("Downloading", channel['name'], "feed list...",end="",flush=True)
+            seen_db = SeenDB(base=basepath,channel=channel['name'])
+            if args['--debug'] or args['--verbose']: print(f"Downloading {channel['name']} feed list...")
             video_list = Feed(channel['rss']).download()
             if video_list:
-                if args['--debug'] or args['--verbose']: print("Done.")
+                if args['--debug'] or args['--verbose']: print("Done.\n")
                 for item in video_list:
                     if args['--interactive']:
-                        bypass_filter = True
+                        bypass_filter = False
                     else:
                         bypass_filter = False
                     if ('filter' in channel.keys() and in_filter(channel['filter'],item['title'])) or ('filter' not in channel.keys()) or bypass_filter:
@@ -246,52 +281,67 @@ def main():
                                 delete_last_line()
                                 if not decision:
                                     seen_db.add(item['href'])
-                                    print(f"{item['title']}...SKIPPING!!",flush=True)
+                                    print(f"{item['title']}...SKIPPING!!\n")
                                     continue
                             if not args['--demo']:
+                                #check if feed has music flag
                                 try:
-                                    if download(item['title'],download_dir,item['href']):
+                                    music = channel['music']
+                                except KeyError:
+                                    music = False
+                                except:
+                                    raise
+                                if len(item['title']) > 100:
+                                    title = item['title'][:100].replace("/","").replace("\\","")
+                                else:
+                                    title = item['title'].replace("/","").replace("\\","")
+                                try:
+                                    if download(title,download_dir,item['href'],music):
                                         seen_db.add(item['href'])
                                 except youtube_dl.utils.DownloadError as e:
                                     action = [do_nothing,problem_db.add,problem_db.ignore_write,seen_db.add]
                                     rv = process_error(e)
                                     if rv[0] == 1:
                                         action[rv[0]](item['title'],item['href'])
+                                    elif rv[0] == 2:
+                                        target = os.path.join(download_dir,f"{item['title']}.pdf")
+                                        download_article(item['href'],target)
                                     else:    
                                         action[rv[0]](item['href'])
-                                    print(f"{item['title']}...{rv[1]}",flush=True)
+                                    print(f"{item['title']}...{rv[1]}\n")
                                 except Exception as e:
-                                    print(item['title'],"\n",str(e))
+                                    print(f"{item['title']}\n{str(e)}\n")
                                     exit(1)
                             else:
-                                print(f"{item['title']}...DEMO!",flush=True)
+                                print(f"{item['title']}...DEMO!\n")
                         else:
                             if not args['--hide-seen']:
-                                print(f"{item['title']}...SEEN!",flush=True)
+                                print(f"{item['title']}...SEEN!\n")
             else:
-                print("Failed.")
-                print("Program terminating...")
+                print("Failed.\n")
+                print("Program terminating...\n")
                 exit(1)
         if len(problem_db):
-            print("\nThere were problems with the following links:") 
+            print("\nThere were problems with the following links:\n") 
             if not args['--cron']:
                 for problem in problem_db:
                     ignore = yn_prompt(f"{problem}: Ignore?")
                     if ignore:
                         problem_db.ignore(problem)
             else:
-                print(problem_db)
+                print(f"{problem_db}\n")
         exit()
     except KeyboardInterrupt:
-        print("\nProgram terminating...")
+        print("\nProgram terminating...\n")
         exit(0)
+    except Exception as e:
+        raise
+        #print(f"UNKNOWN ERROR!!!\n{str(e)}\n")
 
 if __name__ == "__main__":
   arguments = docopt(__doc__, version='rss2youtube-dl v.1.0.3')
-  #print(arguments)
-  #exit()
   if arguments['--rss-from-channel']:
-      print(get_rss(arguments['--rss-from-channel']))
+      print(f"{get_rss(arguments['--rss-from-channel'])}\n")
       exit(0)
   main()
   exit()
