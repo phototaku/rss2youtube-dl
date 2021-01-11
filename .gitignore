@@ -1,2 +1,4 @@
-.seen.db
 data.txt
+.seen/*
+.channels.yaml
+.error.log
