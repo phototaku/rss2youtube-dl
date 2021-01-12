@@ -44,14 +44,13 @@ Options:
 from docopt import docopt
 from libs import *
 import youtube_dl
-import pdfkit
 import os
 import time
 import sys
 import re
 
 # Globals
-percent = '  0.0'
+percent = '  0.0%'
 the_error = ''
 arguments = ''
 basepath = os.path.dirname(os.path.abspath(__file__))
@@ -175,21 +174,29 @@ def download(title,path,href,music=False):
     Returns true if download
     '''
     global the_error,percent,arguments
+    throttle = 0.0
     try:
         urls = video_list(href,title,path)
     except Exception: raise
+    if len(urls) > 1:
+        throttle = 5.0 #seconds
     for video_title in urls.keys():
         print(f"{video_title}...Downloading: {(percent if not arguments['--debug'] else '')}")
         try:
             try:
-                with youtube_dl.YoutubeDL(ydl_opts(video_title,urls[video_title]['url'],urls[video_title]['path'],music)) as ydl:
+                if len(video_title) + len(urls[video_title]['path']) > 160:
+                    myTitle = video_title[:160-len(urls[video_title]['path'])]
+                else:
+                    myTitle = video_title
+                with youtube_dl.YoutubeDL(ydl_opts(myTitle,urls[video_title]['url'],urls[video_title]['path'],music)) as ydl:
                     ydl.download([urls[video_title]['url']]) 
             except Exception: raise
         except Exception: raise
         if not arguments['--debug']:
             print('\b' * (len(percent)+13))
-            percent = '  0.0'
+            percent = '  0.0%'
             print("SUCCESS!" + ' ' * 15 + '\n')
+        time.sleep(throttle)
     return True
 
 def in_filter(filter,title):
@@ -232,18 +239,17 @@ def process_error(e):
     1) add to problem list
     2) ignore from now on
     3) add to seen db
-    4) download page as pdf
     '''
     if "Premieres" in str(e):
         return (0,"Waiting for Premiere!")
     elif "no video" in str(e):
-        return (4,"No video found!")
+        return (2,"No video found!")
     elif "Copyright" in str(e):
         return (1,"Copyright Block!")
     elif "Unsupported URL" in str(e):
         return (2,"Unsupported site!")
     elif "Unable to extract" in str(e):
-        return (4,"Unsupported site!")
+        return (2,"Unsupported site!")
     elif "giving up after" in str(e):
         return (1,"TIMEOUT!")
     elif "not available" in str(e):
@@ -277,17 +283,6 @@ def yn_prompt(prompt: str):
             print('You must enter y or n.\n')
         except IndexError:
             return False
-
-def download_article(url,download_dir):
-    '''
-    Downloads a pdf of url to download_dir
-    Returns true is pdf download was successful
-    '''
-    try:
-        pdfkit.from_url(str(url), download_dir)
-        return True
-    except:
-        raise
 
 def main():
     '''
@@ -351,6 +346,7 @@ def main():
                                     music = False
                                 except:
                                     raise
+                                article = False
                                 try:
                                     if download(item['title'].replace("/","").replace("\\",""),download_dir,item['href'],music):
                                         seen_db.add(item['href'])
@@ -359,12 +355,12 @@ def main():
                                     rv = process_error(e)
                                     if rv[0] == 1:
                                         action[rv[0]](item['title'],item['href'])
-                                    elif rv[0] == 4:
-                                        target = os.path.join(download_dir,f"{item['title']}.pdf")
-                                        download_article(item['href'],target)
                                     else:    
                                         action[rv[0]](item['href'])
-                                    print(f"{item['title']}...{rv[1]}\n")
+                                    if article:
+                                        print("Article Downloaded!\n")
+                                    else:
+                                        print(f"{item['title']}...{rv[1]}\n")
                                 except Exception as e:
                                     print(f"{item['title']}\n{str(e)}\n")
                                     exit(1)
