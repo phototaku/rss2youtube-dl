@@ -27,17 +27,17 @@ class ProblemDB:
         self.db_links[title] = f"{item}\n"
         return True
 
-    def ignore_write(self,href:str):
+    def ignore_write(self,_title,href:str):
         try:
             with open(self.ignore_db_path, 'a') as database:
-                database.write(href)
+                database.write(href+"\n")
             return True
         except Exception as _e:
             raise
 
     def ignore(self,title:str) -> bool:
         try:
-            if self.ignore_write(self.db_links[title]):
+            if self.ignore_write("title",self.db_links[title]):
                 self.db.pop(self.db.index(title))
                 self.db_links.pop(title)
             return True

@@ -1,4 +1,7 @@
 data.txt
 .seen/*
+__pycache__/*
+libs/__pycache__/*
 .channels.yaml
 .error.log
+.ignore.log
