@@ -1,6 +1,24 @@
+"""
+channel-yaml class
+v.1.0
+2020 by magiclab
+
+Usage:
+  channel.py CONFIGFILE
+  channel.py --help
+  channel.py --version
+
+Options:
+  CONFIGFILE                            Use custom configuration file             
+  --version                             Show version info
+
+"""
+
+from docopt import docopt
 import yaml
 from pathlib import Path
 import os
+
 
 class LoadFailure(Exception):
     def __init__(self,message="Load failure!"):
@@ -27,7 +45,8 @@ class Channel:
         return [value for item,value in self.config.items()]
 
 if __name__ == "__main__":
-    configs = Channel()
+    arguments = docopt(__doc__, version='channel-yaml class v.1.0')
+    configs = Channel(config=arguments['CONFIGFILE'])
     for item in configs.list():
         print('RSS:',item['rss'])
         print('Directory:',item['download_dir'])

@@ -1,3 +1,20 @@
+"""
+feed-reader class
+v.1.0
+2020 by magiclab
+
+Usage:
+  feed.py FEED
+  feed.py --help
+  feed.py --version
+
+Options:
+  FEED                                  RSS Feed             
+  --version                             Show version info
+
+"""
+
+from docopt import docopt
 import feedparser
 
 class Feed:
@@ -21,7 +38,8 @@ class Feed:
             print('something went wrong')
 
 if __name__ == "__main__":
-    feed = Feed('https://rss.outsider.press/public.php?op=rss&id=-1460&key=xexmt25ec46090f2c8c')
+    arguments = docopt(__doc__, version='feed-reader class v.1.0')
+    feed = Feed(arguments['FEED'])
     for item in feed.download():
         print('Title:',item['title'])
         print('Path:',item['href'])

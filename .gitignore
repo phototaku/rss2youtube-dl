@@ -4,4 +4,5 @@ __pycache__/*
 libs/__pycache__/*
 .channels.yaml
 .error.log
-.ignore.log
+.ignore.db
+example.yaml
